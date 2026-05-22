@@ -400,7 +400,7 @@
       bigCelebration(playerX, playerY, 'berry');
     } else if (reason === 'carrot-win') {
       titleEl.textContent    = '🥕 Carrot-tastic!';
-      subtitleEl.textContent = "what's up, doc?";
+      subtitleEl.textContent = 'Awesome, I am rooting for you! 🥕';
       bigCelebration(playerX, playerY, 'carrot');
     } else {
       titleEl.textContent    = '🐸 caught!';
@@ -457,9 +457,9 @@
         catchPuff(item.x + 16, item.y + 16, item.type);
         item.el.remove();
 
-        // first to 20 wins
-        if (berries >= 20) { endGame('berry-win');  return false; }
-        if (carrots >= 20) { endGame('carrot-win'); return false; }
+        // first to 10 wins
+        if (berries >= 10) { endGame('berry-win');  return false; }
+        if (carrots >= 10) { endGame('carrot-win'); return false; }
         return false;
       }
       if (item.y > H + 60) {
@@ -498,9 +498,9 @@
   }
 
   // --- input ---
-  function isInteractiveTarget(e) {
-    return e.target && e.target.closest && e.target.closest('button, a, input, select, textarea');
-  }
+  // Mouse listeners stay on document so the rabbit can track the cursor everywhere.
+  // Touch listeners are bound to gameArea ONLY — when the overlay shows it covers
+  // gameArea, so taps on overlay buttons never enter these handlers at all.
   function onMouseMove(e) {
     if (!running || isTouch) return;
     targetX = e.clientX;
@@ -508,7 +508,6 @@
   }
   function onTouchMove(e) {
     if (!running) return;
-    if (isInteractiveTarget(e)) return; // let overlay buttons receive taps normally
     isTouch = true;
     if (e.touches && e.touches[0]) {
       targetX = e.touches[0].clientX;
@@ -517,7 +516,6 @@
     e.preventDefault();
   }
   function onTouchStart(e) {
-    if (isInteractiveTarget(e)) return; // critical: don't kill button/link taps
     isTouch = true;
     if (e.touches && e.touches[0]) {
       targetX = e.touches[0].clientX;
@@ -527,10 +525,13 @@
   }
 
   document.addEventListener('mousemove',  onMouseMove);
-  document.addEventListener('touchmove',  onTouchMove,  { passive: false });
-  document.addEventListener('touchstart', onTouchStart, { passive: false });
+  gameArea.addEventListener('touchmove',  onTouchMove,  { passive: false });
+  gameArea.addEventListener('touchstart', onTouchStart, { passive: false });
 
-  restartBtn.addEventListener('click', startGame);
+  // Restart can be triggered by either a real click or a stray touchend
+  // (belt-and-braces in case the click event is suppressed by something upstream).
+  restartBtn.addEventListener('click', function (e) { e.preventDefault(); startGame(); });
+  restartBtn.addEventListener('touchend', function (e) { e.preventDefault(); startGame(); });
 
   // keep player in bounds on resize / orientation change
   window.addEventListener('resize', function () {
