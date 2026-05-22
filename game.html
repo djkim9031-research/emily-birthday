@@ -218,6 +218,44 @@
     outline-offset: 3px;
   }
 
+  /* intro overlay — uses the same modal shell as game-over but with extra layout */
+  .intro-overlay.show { display: flex; }
+  .intro-bubble {
+    max-width: min(420px, 92vw);
+  }
+  .intro-bubble h2 {
+    font-size: clamp(1.3rem, 5vw, 1.7rem);
+    margin-bottom: 0.85rem;
+  }
+  .intro-body {
+    text-align: left;
+    margin: 0 auto 1.1rem;
+    max-width: 340px;
+  }
+  .intro-line {
+    font-size: clamp(0.95rem, 3.4vw, 1.05rem);
+    margin: 0.5rem 0;
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .intro-line strong { color: var(--accent); }
+  .intro-play-btn {
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(74, 111, 165, 0.25);
+    transition: transform 0.15s ease;
+  }
+  .intro-play-btn:hover  { transform: scale(1.06); }
+  .intro-play-btn:active { transform: scale(0.96); }
+  .intro-play-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
@@ -241,6 +279,19 @@
   move 🐰 with your cursor (or finger) — catch 🍓 and 🥕, avoid 🐸
 </div>
 
+<div class="game-over-overlay intro-overlay" id="intro-overlay" aria-hidden="true">
+  <div class="game-over-bubble intro-bubble">
+    <h2>🐰 Berry &amp; Carrot Catch</h2>
+    <div class="intro-body">
+      <p class="intro-line"><strong>🎮 How:</strong> move 🐰 with your cursor or finger</p>
+      <p class="intro-line"><strong>🎯 Catch:</strong> 🍓 strawberries &amp; 🥕 carrots falling from the top</p>
+      <p class="intro-line"><strong>🏆 Win:</strong> first to <strong>10</strong> of either!</p>
+      <p class="intro-line"><strong>🚫 Avoid:</strong> 🐸 frogs — catching one ends the game</p>
+    </div>
+    <button type="button" id="intro-play-btn" class="intro-play-btn">Play! 🎮</button>
+  </div>
+</div>
+
 <div class="game-over-overlay" id="game-over-overlay" aria-hidden="true">
   <div class="game-over-bubble" role="alertdialog" aria-labelledby="go-title" aria-describedby="go-score">
     <h2 id="go-title">🐸 caught!</h2>
@@ -251,7 +302,7 @@
     </p>
     <div class="game-over-buttons">
       <button type="button" id="restart-btn">🔁 Play again</button>
-      <a href="index.html?v=5" id="home-link">🏠 Back home</a>
+      <a href="index.html?v=6" id="home-link">🏠 Back home</a>
     </div>
   </div>
 </div>
@@ -558,7 +609,37 @@
     }
   });
 
-  startGame();
+  // --- intro overlay (shown only on first arrival from main page) ---
+  var introOverlay = document.getElementById('intro-overlay');
+  var introPlayBtn = document.getElementById('intro-play-btn');
+  function shouldShowIntro() { return /[?&]intro=1\b/.test(window.location.search); }
+  function dismissIntro() {
+    if (introOverlay) {
+      introOverlay.classList.remove('show');
+      introOverlay.style.display = 'none';
+      introOverlay.setAttribute('aria-hidden', 'true');
+    }
+    // Strip ?intro=1 so a future refresh / in-page restart skips the intro.
+    if (window.history && window.history.replaceState) {
+      var search = window.location.search
+        .replace(/([?&])intro=1(&|$)/, '$1')
+        .replace(/[?&]$/, '');
+      window.history.replaceState({}, '', window.location.pathname + search);
+    }
+  }
+  if (introPlayBtn) {
+    introPlayBtn.addEventListener('click', function () { dismissIntro(); startGame(); });
+    introPlayBtn.addEventListener('touchend', function (e) { e.preventDefault(); dismissIntro(); startGame(); });
+  }
+
+  if (shouldShowIntro() && introOverlay) {
+    introOverlay.classList.add('show');
+    introOverlay.style.display = 'flex';
+    introOverlay.setAttribute('aria-hidden', 'false');
+    // Do NOT call startGame yet — Play! button will.
+  } else {
+    startGame();
+  }
 })();
 </script>
 </body>
