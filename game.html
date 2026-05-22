@@ -251,7 +251,7 @@
     </p>
     <div class="game-over-buttons">
       <button type="button" id="restart-btn">🔁 Play again</button>
-      <a href="index.html" id="home-link">🏠 Back home</a>
+      <a href="index.html?v=2" id="home-link">🏠 Back home</a>
     </div>
   </div>
 </div>
@@ -528,10 +528,24 @@
   gameArea.addEventListener('touchmove',  onTouchMove,  { passive: false });
   gameArea.addEventListener('touchstart', onTouchStart, { passive: false });
 
-  // Restart can be triggered by either a real click or a stray touchend
-  // (belt-and-braces in case the click event is suppressed by something upstream).
-  restartBtn.addEventListener('click', function (e) { e.preventDefault(); startGame(); });
+  // Restart button: click for mouse, touchend for touch (touchend preventDefault
+  // suppresses the synthesized click so we don't double-fire on mobile).
+  restartBtn.addEventListener('click', function () { startGame(); });
   restartBtn.addEventListener('touchend', function (e) { e.preventDefault(); startGame(); });
+
+  // Back-home link: also wire an explicit JS navigation as backup in case the
+  // browser's default link follow is suppressed by something upstream.
+  var homeLink = document.getElementById('home-link');
+  if (homeLink) {
+    homeLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.location.href = homeLink.getAttribute('href');
+    });
+    homeLink.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      window.location.href = homeLink.getAttribute('href');
+    });
+  }
 
   // keep player in bounds on resize / orientation change
   window.addEventListener('resize', function () {
