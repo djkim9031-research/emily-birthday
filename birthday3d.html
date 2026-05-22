@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🎂 3D Cake Studio — Emily's Birthday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #BDE7FF;
+    --bg-2: #C8F5D2;
+    --text: #2c3e50;
+    --accent: #4a6fa5;
+    --accent-soft: #6a8fb5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Fredoka', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  #canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+
+  .title-pill {
+    position: fixed;
+    top: 0.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(0.95rem, 3.2vw, 1.2rem);
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    box-shadow: 0 3px 8px rgba(74, 111, 165, 0.18);
+    pointer-events: none;
+    z-index: 5;
+    text-shadow: 1px 1px 0 white;
+  }
+
+  /* decoration palette — vertical strip on the left */
+  .palette {
+    position: fixed;
+    left: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    z-index: 6;
+  }
+  .palette button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 3px 8px rgba(74, 111, 165, 0.2);
+    font-size: 1.55rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+  }
+  .palette button:hover  { transform: scale(1.08); }
+  .palette button:active { transform: scale(0.96); }
+  .palette button.active {
+    background: linear-gradient(135deg, #FFE5EC, #FFF4D6);
+    box-shadow: 0 0 0 3px rgba(255, 193, 210, 0.9), 0 3px 8px rgba(74, 111, 165, 0.25);
+  }
+  .palette-label {
+    font-size: 0.7rem;
+    color: var(--accent);
+    text-align: center;
+    background: rgba(255,255,255,0.7);
+    border-radius: 999px;
+    padding: 0.1rem 0.4rem;
+  }
+
+  /* bottom action bar */
+  .actions {
+    position: fixed;
+    bottom: 0.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.45rem;
+    z-index: 6;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 92vw;
+  }
+  .action-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(74, 111, 165, 0.22);
+    transition: transform 0.15s ease;
+    white-space: nowrap;
+  }
+  .action-btn:hover  { transform: scale(1.05); }
+  .action-btn:active { transform: scale(0.96); }
+  .action-btn.primary {
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+  }
+  .action-btn.active {
+    background: linear-gradient(135deg, #FFE5EC, #FFF4D6);
+    box-shadow: 0 0 0 2px rgba(255, 193, 210, 0.9), 0 3px 8px rgba(74, 111, 165, 0.25);
+  }
+  .action-btn a {
+    color: inherit;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  /* shared modal styles (intro overlay) */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 1rem;
+  }
+  .overlay.show { display: flex; }
+
+  .overlay-card {
+    background: white;
+    border-radius: 28px;
+    padding: 1.8rem 2rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 14px 36px rgba(74, 111, 165, 0.3);
+    max-width: min(440px, 92vw);
+    position: relative;
+    animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .overlay-card::before,
+  .overlay-card::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 -4px 10px rgba(74, 111, 165, 0.10);
+    z-index: -1;
+  }
+  .overlay-card::before { top: -20px; left: 16%; width: 64px; height: 64px; }
+  .overlay-card::after  { top: -12px; right: 14%; width: 42px; height: 42px; }
+
+  @keyframes pop-in {
+    0%   { opacity: 0; transform: scale(0.4); }
+    60%  { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .overlay-card h2 {
+    font-size: clamp(1.3rem, 5vw, 1.7rem);
+    color: var(--accent);
+    margin-bottom: 0.85rem;
+    font-weight: 600;
+  }
+  .intro-body {
+    text-align: left;
+    margin: 0 auto 1.1rem;
+    max-width: 360px;
+  }
+  .intro-line {
+    font-size: clamp(0.95rem, 3.4vw, 1.05rem);
+    margin: 0.5rem 0;
+    line-height: 1.45;
+  }
+  .intro-line strong { color: var(--accent); }
+
+  .start-btn {
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(74, 111, 165, 0.25);
+    transition: transform 0.15s ease;
+  }
+  .start-btn:hover  { transform: scale(1.06); }
+  .start-btn:active { transform: scale(0.96); }
+
+  @media (max-width: 520px) {
+    .palette button { width: 42px; height: 42px; font-size: 1.3rem; }
+    .action-btn { padding: 0.45rem 0.7rem; font-size: 0.82rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="title-pill">🎂 3D Cake Studio</div>
+
+<div class="palette" id="palette">
+  <button data-deco="candle"  type="button" aria-label="Candle"   title="Candle">🕯️</button>
+  <button data-deco="cherry"  type="button" aria-label="Cherry"   title="Cherry">🍒</button>
+  <button data-deco="star"    type="button" aria-label="Star"     title="Star">⭐</button>
+  <button data-deco="heart"   type="button" aria-label="Heart"    title="Heart">💖</button>
+  <button data-deco="flower"  type="button" aria-label="Flower"   title="Flower">🌸</button>
+  <button data-deco="ribbon"  type="button" aria-label="Ribbon"   title="Ribbon">🎀</button>
+</div>
+
+<div class="actions">
+  <button class="action-btn"        id="mode-move"  type="button" title="Move mode (T)">↔️ move</button>
+  <button class="action-btn"        id="mode-rotate" type="button" title="Rotate mode (R)">🔄 spin</button>
+  <button class="action-btn"        id="reset-btn"  type="button" title="Clear all decorations">🧹 reset</button>
+  <button class="action-btn primary" id="snapshot-btn" type="button" title="Save a snapshot">📸 snapshot</button>
+  <a href="index.html?v=9" class="action-btn" id="home-link">🏠 home</a>
+</div>
+
+<!-- intro overlay -->
+<div class="overlay" id="intro-overlay" aria-hidden="true">
+  <div class="overlay-card">
+    <h2>🎂 3D Cake Studio</h2>
+    <div class="intro-body">
+      <p class="intro-line"><strong>🎮 Orbit:</strong> drag the background to spin the camera around the cake</p>
+      <p class="intro-line"><strong>🎨 Pick:</strong> tap a decoration in the left strip</p>
+      <p class="intro-line"><strong>🎯 Place:</strong> tap the cake — your decoration lands right where you tapped</p>
+      <p class="intro-line"><strong>↔️ Refine:</strong> use ↔️ <strong>move</strong> or 🔄 <strong>spin</strong> to drag the last decoration</p>
+      <p class="intro-line"><strong>📸 Save:</strong> snapshot downloads your finished cake as a PNG</p>
+    </div>
+    <button type="button" id="intro-start-btn" class="start-btn">Start! 🎂</button>
+  </div>
+</div>
+
+<script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
+  import { OrbitControls }     from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
+  import { TransformControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/TransformControls.js';
+
+  // ---- renderer / scene / camera --------------------------------------------
+  const canvas   = document.getElementById('canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  const scene = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(4.2, 3.1, 4.2);
+
+  // ---- lighting -------------------------------------------------------------
+  scene.add(new THREE.HemisphereLight(0xFFF6E8, 0xB6D9FF, 0.85));
+  const key = new THREE.DirectionalLight(0xFFFFFF, 0.75);
+  key.position.set(5, 8, 5);
+  scene.add(key);
+  const fill = new THREE.PointLight(0xFFD1DC, 0.55, 18);
+  fill.position.set(-3.5, 2.2, 3);
+  scene.add(fill);
+  const rim = new THREE.PointLight(0xC8F5D2, 0.4, 16);
+  rim.position.set(3, 1.8, -3);
+  scene.add(rim);
+
+  // ---- turntable platform ---------------------------------------------------
+  const turntable = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.1, 2.25, 0.18, 64),
+    new THREE.MeshStandardMaterial({ color: 0xE7DCE7, roughness: 0.55, metalness: 0.05 })
+  );
+  turntable.position.y = -0.09;
+  scene.add(turntable);
+
+  // ---- procedural 3-tier cake ----------------------------------------------
+  const cakeRoot = new THREE.Group();
+  scene.add(cakeRoot);
+
+  const cakeTiers = [
+    { r: 1.45, h: 0.62, color: 0xFFE9DE, frostColor: 0xFFD1DC },
+    { r: 1.05, h: 0.55, color: 0xFFD1DC, frostColor: 0xFFB6C9 },
+    { r: 0.70, h: 0.48, color: 0xFFF4D6, frostColor: 0xFFE066 }
+  ];
+  const cakeMeshes = [];  // raycast targets
+  let runningY = 0;
+  cakeTiers.forEach((t, i) => {
+    // tier body
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(t.r, t.r * 1.02, t.h, 48),
+      new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.55 })
+    );
+    body.position.y = runningY + t.h / 2;
+    cakeRoot.add(body);
+    cakeMeshes.push(body);
+
+    // frosting drip ring at top of tier (a slightly smaller torus)
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(t.r * 0.93, 0.07, 12, 48),
+      new THREE.MeshStandardMaterial({ color: t.frostColor, roughness: 0.4 })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = runningY + t.h;
+    cakeRoot.add(ring);
+    cakeMeshes.push(ring);
+
+    runningY += t.h;
+  });
+
+  // tiny cherry pre-baked on top — just to give the cake an anchor
+  const cherryOnTop = new THREE.Mesh(
+    new THREE.SphereGeometry(0.11, 20, 14),
+    new THREE.MeshStandardMaterial({ color: 0xCC2244, roughness: 0.3 })
+  );
+  cherryOnTop.position.y = runningY + 0.1;
+  cakeRoot.add(cherryOnTop);
+  cakeMeshes.push(cherryOnTop);
+
+  // ---- controls -------------------------------------------------------------
+  const orbit = new OrbitControls(camera, renderer.domElement);
+  orbit.enableDamping = true;
+  orbit.dampingFactor = 0.08;
+  orbit.target.set(0, runningY * 0.55, 0);
+  orbit.minDistance = 2.2;
+  orbit.maxDistance = 12;
+  orbit.maxPolarAngle = Math.PI * 0.49;  // don't let camera go below platform
+  orbit.update();
+
+  const transform = new TransformControls(camera, renderer.domElement);
+  // suppress orbit while user is dragging a gizmo handle
+  transform.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; });
+  scene.add(transform);
+  let currentMode = 'translate';
+  transform.setMode('translate');
+
+  // ---- decoration factories -------------------------------------------------
+  // Each maker returns a Group whose base (pivot) sits at y=0 so it sits flat
+  // on a surface when its +Y axis is aligned with the surface normal.
+  const decorationMakers = {
+    candle: () => {
+      const g = new THREE.Group();
+      const stick = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.045, 0.34, 14),
+        new THREE.MeshStandardMaterial({ color: 0xE799B0, roughness: 0.4 })
+      );
+      stick.position.y = 0.17;
+      g.add(stick);
+      const flame = new THREE.Mesh(
+        new THREE.SphereGeometry(0.07, 14, 10),
+        new THREE.MeshStandardMaterial({
+          color: 0xFFE066, emissive: 0xFFA040, emissiveIntensity: 0.9, roughness: 0.2
+        })
+      );
+      flame.position.y = 0.38;
+      g.add(flame);
+      return g;
+    },
+    cherry: () => {
+      const g = new THREE.Group();
+      const ball = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 18, 14),
+        new THREE.MeshStandardMaterial({ color: 0xCC2244, roughness: 0.3 })
+      );
+      ball.position.y = 0.1;
+      g.add(ball);
+      const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.012, 0.012, 0.08, 8),
+        new THREE.MeshStandardMaterial({ color: 0x5d8a4d, roughness: 0.5 })
+      );
+      stem.position.y = 0.22;
+      stem.rotation.z = 0.2;
+      g.add(stem);
+      return g;
+    },
+    star: () => {
+      const m = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.12, 0),
+        new THREE.MeshStandardMaterial({ color: 0xFFE066, roughness: 0.25, metalness: 0.25 })
+      );
+      m.position.y = 0.12;
+      return m;
+    },
+    heart: () => {
+      // 2D heart shape extruded into 3D
+      const shape = new THREE.Shape();
+      const x = 0, y = 0;
+      shape.moveTo(x + 0.05, y + 0.05);
+      shape.bezierCurveTo(x + 0.05, y + 0.05, x + 0.04, y, x, y);
+      shape.bezierCurveTo(x - 0.06, y, x - 0.06, y + 0.07, x - 0.06, y + 0.07);
+      shape.bezierCurveTo(x - 0.06, y + 0.11, x - 0.03, y + 0.154, x + 0.05, y + 0.19);
+      shape.bezierCurveTo(x + 0.12, y + 0.154, x + 0.16, y + 0.11, x + 0.16, y + 0.07);
+      shape.bezierCurveTo(x + 0.16, y + 0.07, x + 0.16, y, x + 0.10, y);
+      shape.bezierCurveTo(x + 0.07, y, x + 0.05, y + 0.05, x + 0.05, y + 0.05);
+      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.045, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 3, curveSegments: 16 });
+      geom.center();
+      const m = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ color: 0xFF7AAB, roughness: 0.3, metalness: 0.1 }));
+      const g = new THREE.Group();
+      g.add(m);
+      // orient flat side down by rotating
+      m.rotation.x = -Math.PI / 2;
+      m.rotation.z = Math.PI;
+      g.position.y = 0.05;
+      return g;
+    },
+    flower: () => {
+      const g = new THREE.Group();
+      // 5 petal mini-spheres around center
+      const petalMat = new THREE.MeshStandardMaterial({ color: 0xFFB5C5, roughness: 0.4 });
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const petal = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), petalMat);
+        petal.position.set(Math.cos(a) * 0.075, 0.06, Math.sin(a) * 0.075);
+        g.add(petal);
+      }
+      const center = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06, 12, 10),
+        new THREE.MeshStandardMaterial({ color: 0xFFE066, roughness: 0.3 })
+      );
+      center.position.y = 0.08;
+      g.add(center);
+      return g;
+    },
+    ribbon: () => {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: 0xE799B0, roughness: 0.3 });
+      // bow: two squished torus halves
+      const loop1 = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.025, 10, 18), mat);
+      loop1.scale.set(1, 0.55, 1);
+      loop1.position.set(-0.06, 0.06, 0);
+      g.add(loop1);
+      const loop2 = loop1.clone();
+      loop2.position.x = 0.06;
+      g.add(loop2);
+      // knot in the middle
+      const knot = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.05), mat);
+      knot.position.y = 0.06;
+      g.add(knot);
+      return g;
+    }
+  };
+
+  // ---- state ----------------------------------------------------------------
+  let currentDeco = null;
+  const placedDecorations = [];
+
+  // ---- raycaster placement --------------------------------------------------
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let downX = 0, downY = 0;
+  const TAP_TOL = 6;  // px movement allowed for a tap to still count as tap
+
+  function eventXY(e) {
+    if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    if (e.changedTouches && e.changedTouches[0]) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+  function updatePointer(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    pointer.x =  ((x - rect.left) / rect.width)  * 2 - 1;
+    pointer.y = -((y - rect.top)  / rect.height) * 2 + 1;
+  }
+
+  function tryPlace(x, y) {
+    if (!currentDeco) return false;
+    updatePointer(x, y);
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(cakeMeshes, false);
+    if (hits.length === 0) return false;
+    const hit = hits[0];
+
+    const deco = decorationMakers[currentDeco]();
+    deco.userData.kind = currentDeco;
+    deco.position.copy(hit.point);
+
+    // align the decoration's +Y axis with the surface normal so it stands up
+    const worldNormal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+    deco.quaternion.setFromUnitVectors(up, worldNormal);
+
+    scene.add(deco);
+    placedDecorations.push(deco);
+    transform.attach(deco);
+    return true;
+  }
+
+  // distinguish click-to-place from drag-to-orbit by tracking pointer travel
+  canvas.addEventListener('pointerdown', e => {
+    downX = e.clientX; downY = e.clientY;
+  });
+  canvas.addEventListener('pointerup', e => {
+    const dx = e.clientX - downX, dy = e.clientY - downY;
+    if (Math.sqrt(dx * dx + dy * dy) > TAP_TOL) return;  // it was a drag
+    tryPlace(e.clientX, e.clientY);
+  });
+
+  // ---- palette buttons ------------------------------------------------------
+  document.querySelectorAll('[data-deco]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.deco;
+      if (currentDeco === k) {
+        currentDeco = null;
+        btn.classList.remove('active');
+      } else {
+        currentDeco = k;
+        document.querySelectorAll('[data-deco]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+    });
+  });
+
+  // ---- mode toggles ---------------------------------------------------------
+  const moveBtn = document.getElementById('mode-move');
+  const rotBtn  = document.getElementById('mode-rotate');
+  function setMode(mode) {
+    currentMode = mode;
+    transform.setMode(mode);
+    moveBtn.classList.toggle('active', mode === 'translate');
+    rotBtn.classList.toggle('active',  mode === 'rotate');
+  }
+  moveBtn.addEventListener('click', () => setMode('translate'));
+  rotBtn.addEventListener('click',  () => setMode('rotate'));
+  setMode('translate');
+
+  // keyboard shortcuts
+  window.addEventListener('keydown', e => {
+    if (e.key === 't' || e.key === 'T') setMode('translate');
+    if (e.key === 'r' || e.key === 'R') setMode('rotate');
+    if (e.key === 'Escape') transform.detach();
+  });
+
+  // ---- reset + snapshot -----------------------------------------------------
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    transform.detach();
+    placedDecorations.splice(0, placedDecorations.length).forEach(d => {
+      scene.remove(d);
+      d.traverse?.(o => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) o.material.dispose?.();
+      });
+    });
+  });
+
+  document.getElementById('snapshot-btn').addEventListener('click', () => {
+    transform.detach();
+    // wait one frame so the gizmo is gone from the next render
+    requestAnimationFrame(() => {
+      renderer.render(scene, camera);
+      const data = renderer.domElement.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = data;
+      a.download = 'emily-cake.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+  });
+
+  // explicit JS navigation for home link (some browsers swallow link clicks
+  // under various preventDefault flows from OrbitControls)
+  const homeLink = document.getElementById('home-link');
+  homeLink.addEventListener('click', e => {
+    e.preventDefault();
+    window.location.href = homeLink.getAttribute('href');
+  });
+  homeLink.addEventListener('touchend', e => {
+    e.preventDefault();
+    window.location.href = homeLink.getAttribute('href');
+  });
+
+  // ---- resize ---------------------------------------------------------------
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // ---- animation loop -------------------------------------------------------
+  function tick() {
+    orbit.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // ---- intro overlay (only on first arrival from main page) ----------------
+  const introOverlay = document.getElementById('intro-overlay');
+  const startBtn = document.getElementById('intro-start-btn');
+  function shouldShowIntro() { return /[?&]intro=1\b/.test(window.location.search); }
+  function dismissIntro() {
+    introOverlay.classList.remove('show');
+    introOverlay.style.display = 'none';
+    introOverlay.setAttribute('aria-hidden', 'true');
+    if (window.history && window.history.replaceState) {
+      const search = window.location.search
+        .replace(/([?&])intro=1(&|$)/, '$1')
+        .replace(/[?&]$/, '');
+      window.history.replaceState({}, '', window.location.pathname + search);
+    }
+  }
+  startBtn.addEventListener('click',   dismissIntro);
+  startBtn.addEventListener('touchend', e => { e.preventDefault(); dismissIntro(); });
+
+  if (shouldShowIntro()) {
+    introOverlay.classList.add('show');
+    introOverlay.style.display = 'flex';
+    introOverlay.setAttribute('aria-hidden', 'false');
+  }
+</script>
+</body>
+</html>

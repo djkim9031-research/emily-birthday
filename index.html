@@ -713,6 +713,23 @@
               aria-expanded="false" aria-controls="cake-bubble"
               aria-label="Tap the cake to see what it's thinking">🎂</button>
     </div>
+
+    <div class="rabbit-section">
+      <div class="thought-bubble" id="studio-bubble" role="status" aria-hidden="true">
+        <div class="bubble-body">
+          <span class="berry-row" aria-hidden="true">🎨🎂🎨</span>
+          <span class="berry-row" aria-hidden="true">🕯️🍒💖</span>
+          <span class="berry-row" aria-hidden="true">⭐🌸🎀</span>
+          <a href="birthday3d.html?v=1&intro=1" class="play-game-link">🎮 Open 3D studio</a>
+        </div>
+        <span class="tail tail-1" aria-hidden="true"></span>
+        <span class="tail tail-2" aria-hidden="true"></span>
+        <span class="tail tail-3" aria-hidden="true"></span>
+      </div>
+      <button class="rabbit-button" id="studio-btn"
+              aria-expanded="false" aria-controls="studio-bubble"
+              aria-label="Tap the palette to open the 3D cake studio">🎨</button>
+    </div>
   </div>
 
   <section class="memory-section" aria-label="Memory match game">
@@ -783,7 +800,8 @@
     var pairs = [
       { btnId: 'rabbit-btn',   bubbleId: 'rabbit-bubble' },
       { btnId: 'squirrel-btn', bubbleId: 'squirrel-bubble' },
-      { btnId: 'cake-btn',     bubbleId: 'cake-bubble' }
+      { btnId: 'cake-btn',     bubbleId: 'cake-bubble' },
+      { btnId: 'studio-btn',   bubbleId: 'studio-bubble' }
     ];
     var items = pairs
       .map(function (p) {
