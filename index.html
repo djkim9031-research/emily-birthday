@@ -660,8 +660,22 @@
               aria-label="Tap the cards to open Memory Match">🎴</button>
     </div>
 
-    <!-- empty slot reserved for a future 6th icon -->
-    <div class="critter-placeholder" aria-hidden="true"></div>
+    <div class="rabbit-section">
+      <div class="thought-bubble" id="plant-bubble" role="status" aria-hidden="true">
+        <div class="bubble-body">
+          <span class="berry-row" aria-hidden="true">🌰🌱🌿</span>
+          <span class="berry-row" aria-hidden="true">💧🌾🌷</span>
+          <span class="berry-row" aria-hidden="true">🌸💖✨</span>
+          <a href="plant-game.html?v=1&intro=1" class="play-game-link">🎮 Play game</a>
+        </div>
+        <span class="tail tail-1" aria-hidden="true"></span>
+        <span class="tail tail-2" aria-hidden="true"></span>
+        <span class="tail tail-3" aria-hidden="true"></span>
+      </div>
+      <button class="rabbit-button" id="plant-btn"
+              aria-expanded="false" aria-controls="plant-bubble"
+              aria-label="Tap the plant to grow Emily's birthday flower">🪴</button>
+    </div>
   </div>
 
 <p class="message">
@@ -727,7 +741,8 @@
       { btnId: 'squirrel-btn', bubbleId: 'squirrel-bubble' },
       { btnId: 'cake-btn',     bubbleId: 'cake-bubble' },
       { btnId: 'studio-btn',   bubbleId: 'studio-bubble' },
-      { btnId: 'memory-btn',   bubbleId: 'memory-bubble' }
+      { btnId: 'memory-btn',   bubbleId: 'memory-bubble' },
+      { btnId: 'plant-btn',    bubbleId: 'plant-bubble' }
     ];
     var items = pairs
       .map(function (p) {
