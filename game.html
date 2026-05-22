@@ -363,15 +363,53 @@
     return (dx * dx + dy * dy) < (radius * radius);
   }
 
-  function endGame() {
+  function bigCelebration(x, y, type) {
+    var pool = type === 'berry'  ? ['🍓','💖','✨','🎉','🌸','🌟']
+             : type === 'carrot' ? ['🥕','🧡','✨','🎉','🌻','🌟']
+             : ['🐸','🌊','💦','✨'];
+    var n = 22;
+    for (var i = 0; i < n; i++) {
+      var p = document.createElement('div');
+      p.className = 'catch-puff';
+      p.textContent = pool[Math.floor(Math.random() * pool.length)];
+      p.style.left = x + 'px';
+      p.style.top  = y + 'px';
+      p.style.fontSize = (1.1 + Math.random() * 1.2) + 'rem';
+      var angle = (Math.PI * 2 * i / n) + (Math.random() - 0.5) * 0.4;
+      var dist = 80 + Math.random() * 110;
+      var dx = Math.cos(angle) * dist;
+      var dy = Math.sin(angle) * dist - 40;
+      p.style.setProperty('--pdx', dx + 'px');
+      p.style.setProperty('--pdy', dy + 'px');
+      document.body.appendChild(p);
+      (function (n) { setTimeout(function () { n.remove(); }, 1100); })(p);
+    }
+  }
+
+  function endGame(reason) {
     running = false;
     cancelAnimationFrame(animFrame);
     finalBerriesEl.textContent = berries;
     finalCarrotsEl.textContent = carrots;
+
+    var titleEl    = document.getElementById('go-title');
+    var subtitleEl = document.getElementById('go-subtitle');
+    if (reason === 'berry-win') {
+      titleEl.textContent    = '🍓 Berry impressive!';
+      subtitleEl.textContent = "you're berry, berry good!";
+      bigCelebration(playerX, playerY, 'berry');
+    } else if (reason === 'carrot-win') {
+      titleEl.textContent    = '🥕 Carrot-tastic!';
+      subtitleEl.textContent = "what's up, doc?";
+      bigCelebration(playerX, playerY, 'carrot');
+    } else {
+      titleEl.textContent    = '🐸 caught!';
+      subtitleEl.textContent = 'Yo Gaeguri~';
+      catchPuff(playerX, playerY, 'frog');
+    }
+
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
-    // a small celebration burst from the player's last position
-    catchPuff(playerX, playerY, 'frog');
   }
 
   function gameLoop(time) {
@@ -406,7 +444,7 @@
       if (checkCollision(item)) {
         if (item.type === 'frog') {
           item.el.remove();
-          endGame();
+          endGame('frog');
           return false;
         }
         if (item.type === 'berry') {
@@ -418,6 +456,10 @@
         }
         catchPuff(item.x + 16, item.y + 16, item.type);
         item.el.remove();
+
+        // first to 20 wins
+        if (berries >= 20) { endGame('berry-win');  return false; }
+        if (carrots >= 20) { endGame('carrot-win'); return false; }
         return false;
       }
       if (item.y > H + 60) {
@@ -456,6 +498,9 @@
   }
 
   // --- input ---
+  function isInteractiveTarget(e) {
+    return e.target && e.target.closest && e.target.closest('button, a, input, select, textarea');
+  }
   function onMouseMove(e) {
     if (!running || isTouch) return;
     targetX = e.clientX;
@@ -463,15 +508,16 @@
   }
   function onTouchMove(e) {
     if (!running) return;
+    if (isInteractiveTarget(e)) return; // let overlay buttons receive taps normally
     isTouch = true;
     if (e.touches && e.touches[0]) {
-      // offset upward so the rabbit isn't fully under the finger
       targetX = e.touches[0].clientX;
       targetY = e.touches[0].clientY - 50;
     }
     e.preventDefault();
   }
   function onTouchStart(e) {
+    if (isInteractiveTarget(e)) return; // critical: don't kill button/link taps
     isTouch = true;
     if (e.touches && e.touches[0]) {
       targetX = e.touches[0].clientX;
