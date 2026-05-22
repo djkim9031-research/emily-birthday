@@ -735,6 +735,21 @@
   <p class="credit">made with 💚💙 for Emily's birthday weekend</p>
 </main>
 
+<!-- chat widget DOM (placed BEFORE the script so getElementById finds it) -->
+<button class="chat-toggle" id="chat-toggle" type="button" aria-label="Open chat" aria-expanded="false">💬</button>
+<aside class="chat-panel" id="chat-panel" role="dialog" aria-label="Chat" aria-hidden="true">
+  <div class="chat-header">
+    <span>💬 chat about Emily's birthday</span>
+    <button class="chat-close" id="chat-close" type="button" aria-label="Close chat">×</button>
+  </div>
+  <div class="chat-transcript" id="chat-transcript" aria-live="polite"></div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" type="text" placeholder="type a message…" autocomplete="off">
+    <button class="chat-send" id="chat-send" type="button">send</button>
+  </div>
+  <div class="chat-disclaimer">powered by free public AI · messages aren't private</div>
+</aside>
+
 <script>
   (function () {
     var emojis = [
@@ -967,8 +982,16 @@
     var send      = document.getElementById('chat-send');
     if (!toggle || !panel || !transcript || !input || !send) return;
 
-    var STORAGE_KEY = 'emily-chat-v1';
-    var SYSTEM_PROMPT = "You are a warm, friendly, and concise chat companion living on Emily's birthday website. You can chat about absolutely anything — from deep philosophical questions to silly jokes to recipe tips. Keep replies short and conversational unless asked for detail. Use occasional gentle emojis but don't overdo it.";
+    var STORAGE_KEY = 'emily-chat-v2-bday';
+    var SYSTEM_PROMPT =
+      "You are an ecstatic birthday-celebration companion who exclusively talks about how wonderful Emily's birthday is. " +
+      "Stay laser-focused on celebrating Emily — her amazing birthday, the joy of her birthday weekend, how special this day is, " +
+      "birthday cake, candles, balloons, wishes, presents, party vibes, and what makes Emily so wonderful to celebrate. " +
+      "If the user tries to talk about ANY other topic (weather, news, code, math, anything unrelated), gently and warmly redirect " +
+      "back to Emily's birthday — for example: 'oh! but did i mention how wonderful Emily's birthday is today? 🎂 let's talk about ___'. " +
+      "Never lecture or scold — just steer the vibe back to birthday celebration with affection. " +
+      "Keep replies SHORT (1–3 sentences usually), warm, and sprinkled with birthday emojis like 🎂🎉✨🎁🎈🌟💖. " +
+      "Vary your phrasing so it never feels repetitive. Be playful and a little silly.";
 
     var history = [{ role: 'system', content: SYSTEM_PROMPT }];
 
@@ -976,7 +999,14 @@
     try {
       var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
       if (saved && Array.isArray(saved) && saved.length > 0) {
+        // ALWAYS replace the system slot with the current prompt so prompt
+        // updates take effect immediately for returning visitors.
         history = saved;
+        if (history[0] && history[0].role === 'system') {
+          history[0].content = SYSTEM_PROMPT;
+        } else {
+          history.unshift({ role: 'system', content: SYSTEM_PROMPT });
+        }
         // rebuild visible transcript from history (skip the system msg)
         transcript.innerHTML = '';
         for (var i = 0; i < history.length; i++) {
@@ -993,7 +1023,7 @@
     }
 
     function renderWelcome() {
-      renderMessage('bot', "hi! 👋 i'm here to chat about anything. what's on your mind?");
+      renderMessage('bot', "hi! 🎂 i'm SO excited — it's Emily's birthday and i can't stop thinking about how wonderful it is! tell me — what's your favorite part of her birthday weekend? ✨");
     }
 
     function persist() {
@@ -1088,20 +1118,5 @@
     });
   })();
 </script>
-
-<!-- chat widget DOM -->
-<button class="chat-toggle" id="chat-toggle" type="button" aria-label="Open chat" aria-expanded="false">💬</button>
-<aside class="chat-panel" id="chat-panel" role="dialog" aria-label="Chat" aria-hidden="true">
-  <div class="chat-header">
-    <span>💬 chat about anything</span>
-    <button class="chat-close" id="chat-close" type="button" aria-label="Close chat">×</button>
-  </div>
-  <div class="chat-transcript" id="chat-transcript" aria-live="polite"></div>
-  <div class="chat-input-row">
-    <input class="chat-input" id="chat-input" type="text" placeholder="type a message…" autocomplete="off">
-    <button class="chat-send" id="chat-send" type="button">send</button>
-  </div>
-  <div class="chat-disclaimer">powered by free public AI · messages aren't private</div>
-</aside>
 </body>
 </html>
