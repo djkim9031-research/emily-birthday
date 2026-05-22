@@ -244,14 +244,14 @@
 <div class="game-over-overlay" id="game-over-overlay" aria-hidden="true">
   <div class="game-over-bubble" role="alertdialog" aria-labelledby="go-title" aria-describedby="go-score">
     <h2 id="go-title">🐸 caught!</h2>
-    <p class="yo-gaeguri">Yo Gaeguri~</p>
+    <p class="yo-gaeguri" id="go-subtitle">Yo Gaeguri~</p>
     <p class="final-score" id="go-score">
       <span class="item">🍓 <strong id="final-berries">0</strong></span>
       <span class="item">🥕 <strong id="final-carrots">0</strong></span>
     </p>
     <div class="game-over-buttons">
       <button type="button" id="restart-btn">🔁 Play again</button>
-      <a href="index.html?v=3" id="home-link">🏠 Back home</a>
+      <a href="index.html?v=4" id="home-link">🏠 Back home</a>
     </div>
   </div>
 </div>
@@ -381,15 +381,16 @@
 
     var titleEl    = document.getElementById('go-title');
     var subtitleEl = document.getElementById('go-subtitle');
+    function setText(el, text) { if (el) el.textContent = text; }
     if (reason === 'berry-win') {
-      titleEl.textContent    = '🍓 Berry impressive!';
-      subtitleEl.textContent = "you're berry, berry good!";
+      setText(titleEl,    '🍓 Berry impressive!');
+      setText(subtitleEl, "you're berry, berry good!");
     } else if (reason === 'carrot-win') {
-      titleEl.textContent    = '🥕 Carrot-tastic!';
-      subtitleEl.textContent = 'Awesome, I am rooting for you! 🥕';
+      setText(titleEl,    '🥕 Carrot-tastic!');
+      setText(subtitleEl, 'Awesome, I am rooting for you! 🥕');
     } else {
-      titleEl.textContent    = '🐸 caught!';
-      subtitleEl.textContent = 'Yo Gaeguri~';
+      setText(titleEl,    '🐸 caught!');
+      setText(subtitleEl, 'Yo Gaeguri~');
     }
 
     // Show the overlay FIRST so even if any visual flair throws, the bubble still appears.
