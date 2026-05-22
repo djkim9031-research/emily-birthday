@@ -982,7 +982,9 @@
     var send      = document.getElementById('chat-send');
     if (!toggle || !panel || !transcript || !input || !send) return;
 
-    var STORAGE_KEY = 'emily-chat-v2-bday';
+    // No persistence — each page visit starts a brand-new conversation.
+    // The chat is per-device (lives only in this tab's JS memory) and is not
+    // shared with any other visitor.
     var SYSTEM_PROMPT =
       "You are an ecstatic birthday-celebration companion who exclusively talks about how wonderful Emily's birthday is. " +
       "Stay laser-focused on celebrating Emily — her amazing birthday, the joy of her birthday weekend, how special this day is, " +
@@ -995,39 +997,15 @@
 
     var history = [{ role: 'system', content: SYSTEM_PROMPT }];
 
-    // try to restore prior conversation from localStorage
-    try {
-      var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (saved && Array.isArray(saved) && saved.length > 0) {
-        // ALWAYS replace the system slot with the current prompt so prompt
-        // updates take effect immediately for returning visitors.
-        history = saved;
-        if (history[0] && history[0].role === 'system') {
-          history[0].content = SYSTEM_PROMPT;
-        } else {
-          history.unshift({ role: 'system', content: SYSTEM_PROMPT });
-        }
-        // rebuild visible transcript from history (skip the system msg)
-        transcript.innerHTML = '';
-        for (var i = 0; i < history.length; i++) {
-          if (history[i].role === 'user' || history[i].role === 'assistant') {
-            renderMessage(history[i].role === 'user' ? 'user' : 'bot', history[i].content);
-          }
-        }
-        if (transcript.children.length === 0) renderWelcome();
-      } else {
-        renderWelcome();
-      }
-    } catch (_) {
-      renderWelcome();
-    }
+    // Tidy up any stale persisted chats from earlier builds (now no-op).
+    try { localStorage.removeItem('emily-chat-v1'); }      catch (_) {}
+    try { localStorage.removeItem('emily-chat-v2-bday'); } catch (_) {}
+
+    // Fresh transcript every visit.
+    renderWelcome();
 
     function renderWelcome() {
       renderMessage('bot', "hi! 🎂 i'm SO excited — it's Emily's birthday and i can't stop thinking about how wonderful it is! tell me — what's your favorite part of her birthday weekend? ✨");
-    }
-
-    function persist() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(history)); } catch (_) {}
     }
 
     function renderMessage(who, text) {
@@ -1097,7 +1075,6 @@
             : 'hmm, i got a bit tangled. try again? 🫠';
           renderMessage('bot', reply);
           history.push({ role: 'assistant', content: reply });
-          persist();
           send.disabled = false;
           input.focus();
         })
