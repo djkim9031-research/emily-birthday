@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>🐰 Berry & Carrot Catch — Emily's Birthday Game</title>
+<title>🐿️ Squirrel's Search — Emily's Birthday Game</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
@@ -36,9 +36,8 @@
     top: 0; left: 0; right: 0;
     padding: 0.85rem 1rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    gap: 0.75rem;
     z-index: 5;
     pointer-events: none;
   }
@@ -47,16 +46,10 @@
     font-weight: 600;
     color: var(--accent);
     text-shadow: 1px 1px 0 white;
-  }
-  .score-display {
-    font-size: clamp(0.95rem, 3.2vw, 1.15rem);
-    background: white;
-    padding: 0.4rem 0.85rem;
+    background: rgba(255, 255, 255, 0.55);
+    padding: 0.3rem 0.85rem;
     border-radius: 999px;
-    box-shadow: 0 3px 8px rgba(74, 111, 165, 0.2);
-    white-space: nowrap;
   }
-  .score-display .gap { display: inline-block; width: 0.6rem; }
 
   .game-area {
     position: fixed;
@@ -70,6 +63,38 @@
     pointer-events: none;
     will-change: transform;
     user-select: none;
+    filter: drop-shadow(0 3px 5px rgba(74, 111, 165, 0.18));
+  }
+
+  /* The rabbit goal — fixed top-left, gently pulsing so it draws the eye */
+  .goal-rabbit {
+    position: absolute;
+    font-size: clamp(2.5rem, 7vw, 3.4rem);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
+    user-select: none;
+    filter: drop-shadow(0 4px 7px rgba(74, 111, 165, 0.28));
+    animation: rabbit-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes rabbit-pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1)    rotate(-3deg); }
+    50%      { transform: translate(-50%, -50%) scale(1.10) rotate(3deg); }
+  }
+  /* a soft glow halo behind the rabbit so it's obviously the goal */
+  .goal-halo {
+    position: absolute;
+    width: 110px; height: 110px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 209, 220, 0.55) 0%, rgba(255, 209, 220, 0) 65%);
+    pointer-events: none;
+    z-index: 1;
+    animation: halo-breath 2.4s ease-in-out infinite;
+  }
+  @keyframes halo-breath {
+    0%, 100% { transform: translate(-50%, -50%) scale(1);   opacity: 0.7; }
+    50%      { transform: translate(-50%, -50%) scale(1.2); opacity: 1;   }
   }
 
   .player {
@@ -83,7 +108,7 @@
     filter: drop-shadow(0 4px 6px rgba(74, 111, 165, 0.25));
   }
 
-  /* tiny catch puff reused on each successful catch */
+  /* shared catch-puff (small visual flair) */
   .catch-puff {
     position: fixed;
     pointer-events: none;
@@ -98,7 +123,6 @@
     100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--pdx, 0), var(--pdy, -50px)) scale(1.2); }
   }
 
-  /* mobile/desktop hint */
   .game-instructions {
     position: fixed;
     bottom: 1rem;
@@ -117,7 +141,7 @@
   }
   .game-instructions.hidden { opacity: 0; }
 
-  /* game-over thought-bubble overlay */
+  /* game-over thought-bubble overlay (identical to game.html) */
   .game-over-overlay {
     position: fixed;
     inset: 0;
@@ -138,11 +162,10 @@
     padding: 1.8rem 2rem 1.5rem;
     text-align: center;
     box-shadow: 0 14px 36px rgba(74, 111, 165, 0.3);
-    max-width: min(420px, 92vw);
+    max-width: min(440px, 92vw);
     position: relative;
     animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  /* lumpy edges for thought-bubble feel */
   .game-over-bubble::before,
   .game-over-bubble::after {
     content: "";
@@ -162,29 +185,17 @@
   }
 
   .game-over-bubble h2 {
-    font-size: clamp(1.4rem, 5vw, 1.85rem);
+    font-size: clamp(1.15rem, 4vw, 1.55rem);
     color: var(--accent);
     margin-bottom: 0.4rem;
     font-weight: 600;
+    line-height: 1.3;
   }
   .game-over-bubble .yo-gaeguri {
-    font-size: clamp(1.2rem, 4.2vw, 1.55rem);
+    font-size: clamp(1rem, 3.6vw, 1.2rem);
     color: var(--accent-soft);
     margin-bottom: 1rem;
     font-style: italic;
-  }
-  .game-over-bubble .final-score {
-    font-size: clamp(1.05rem, 3.6vw, 1.25rem);
-    margin-bottom: 1.25rem;
-    line-height: 1.6;
-  }
-  .game-over-bubble .final-score .item {
-    display: inline-block;
-    margin: 0 0.55rem;
-  }
-  .game-over-bubble .final-score .item strong {
-    color: var(--accent);
-    font-size: 1.15em;
   }
 
   .game-over-buttons {
@@ -229,26 +240,19 @@
 <body>
 
 <header class="game-header">
-  <div class="game-title">🐰 Berry &amp; Carrot Catch</div>
-  <div class="score-display" aria-live="polite">
-    🍓 <strong id="berry-count">0</strong><span class="gap"></span>🥕 <strong id="carrot-count">0</strong>
-  </div>
+  <div class="game-title">🐿️ Squirrel's Search</div>
 </header>
 
 <div class="game-area" id="game-area"></div>
 
 <div class="game-instructions" id="game-instructions">
-  move 🐰 with your cursor (or finger) — catch 🍓 and 🥕, avoid 🐸
+  move 🐿️ with your cursor (or finger) — reach 🐰, dodge everything else
 </div>
 
 <div class="game-over-overlay" id="game-over-overlay" aria-hidden="true">
-  <div class="game-over-bubble" role="alertdialog" aria-labelledby="go-title" aria-describedby="go-score">
-    <h2 id="go-title">🐸 caught!</h2>
-    <p class="yo-gaeguri" id="go-subtitle">Yo Gaeguri~</p>
-    <p class="final-score" id="go-score">
-      <span class="item">🍓 <strong id="final-berries">0</strong></span>
-      <span class="item">🥕 <strong id="final-carrots">0</strong></span>
-    </p>
+  <div class="game-over-bubble" role="alertdialog" aria-labelledby="go-title" aria-describedby="go-subtitle">
+    <h2 id="go-title">Squirrel found his rabbit girlfriend 🐰</h2>
+    <p class="yo-gaeguri" id="go-subtitle">true love prevails ✨</p>
     <div class="game-over-buttons">
       <button type="button" id="restart-btn">🔁 Play again</button>
       <a href="index.html?v=5" id="home-link">🏠 Back home</a>
@@ -258,27 +262,41 @@
 
 <script>
 (function () {
-  var gameArea       = document.getElementById('game-area');
-  var berryCountEl   = document.getElementById('berry-count');
-  var carrotCountEl  = document.getElementById('carrot-count');
-  var overlay        = document.getElementById('game-over-overlay');
-  var finalBerriesEl = document.getElementById('final-berries');
-  var finalCarrotsEl = document.getElementById('final-carrots');
-  var restartBtn     = document.getElementById('restart-btn');
-  var instructions   = document.getElementById('game-instructions');
+  var gameArea     = document.getElementById('game-area');
+  var overlay      = document.getElementById('game-over-overlay');
+  var restartBtn   = document.getElementById('restart-btn');
+  var instructions = document.getElementById('game-instructions');
 
+  // Goal: fixed rabbit at top-left
+  var GOAL_X = 70;                 // px from left
+  var GOAL_Y = 80;                 // px from top
+  var GOAL_RADIUS = 55;            // generous catch zone
+  var goalEl = null;
+  var haloEl = null;
+
+  // Player (squirrel) state
   var player = null;
-  var items = [];
-  var berries = 0, carrots = 0;
-  var running = false;
   var playerX = 0, playerY = 0;
   var targetX = 0, targetY = 0;
+  var isTouch = false;
+
+  // Items in flight
+  var items = [];
   var lastSpawnTime = 0;
-  var nextSpawnDelay = 700;
-  var frogGraceMs = 5000;  // no frog for the first 5 seconds
+  var nextSpawnDelay = 500;
+
+  var running = false;
   var lastTime = 0;
   var animFrame = null;
-  var isTouch = false;     // becomes true on first touch event
+
+  var ANIMALS = [
+    ['🐱','cat'],   ['🐶','dog'],     ['🐦','bird'],     ['🐢','turtle'],
+    ['🐸','frog'],  ['🦔','hedgehog'],['🐘','elephant'], ['🐮','cow'],
+    ['🐷','pig'],   ['🦓','zebra'],   ['🦘','kangaroo'], ['🐨','koala'],
+    ['🐼','panda'], ['🦊','fox'],     ['🦒','giraffe'],  ['🦌','deer'],
+    ['🐺','wolf'],  ['🐻','bear']
+  ];
+  var OBSTACLES = ['🏢','🌳','🏠','🚗'];
 
   function setPlayerPosition(x, y) {
     var W = window.innerWidth, H = window.innerHeight;
@@ -294,53 +312,72 @@
     if (player) player.remove();
     player = document.createElement('div');
     player.className = 'player';
-    player.textContent = '🐰';
+    player.textContent = '🐿️';
     gameArea.appendChild(player);
-    setPlayerPosition(window.innerWidth / 2, window.innerHeight * 0.78);
+    // Start: right edge, vertical center
+    setPlayerPosition(window.innerWidth - 60, window.innerHeight / 2);
     targetX = playerX;
     targetY = playerY;
   }
 
+  function createGoal() {
+    if (goalEl) goalEl.remove();
+    if (haloEl) haloEl.remove();
+    haloEl = document.createElement('div');
+    haloEl.className = 'goal-halo';
+    haloEl.style.left = GOAL_X + 'px';
+    haloEl.style.top  = GOAL_Y + 'px';
+    gameArea.appendChild(haloEl);
+
+    goalEl = document.createElement('div');
+    goalEl.className = 'goal-rabbit';
+    goalEl.textContent = '🐰';
+    goalEl.style.left = GOAL_X + 'px';
+    goalEl.style.top  = GOAL_Y + 'px';
+    gameArea.appendChild(goalEl);
+  }
+
   function spawnItem() {
-    var W = window.innerWidth;
+    var W = window.innerWidth, H = window.innerHeight;
     var el = document.createElement('div');
     el.className = 'falling-item';
 
-    // Decide what falls
-    var r = Math.random();
-    var type;
-    if (frogGraceMs <= 0 && r < 0.08) {
-      type = 'frog';
-      el.textContent = '🐸';
-    } else if (r < 0.55) {
-      type = 'berry';
-      el.textContent = '🍓';
+    // 50/50 animal vs obstacle
+    var meta;
+    if (Math.random() < 0.5) {
+      var a = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+      meta = { kind: 'animal', emoji: a[0], name: a[1] };
     } else {
-      type = 'carrot';
-      el.textContent = '🥕';
+      var o = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
+      meta = { kind: 'obstacle', emoji: o, name: o };
     }
+    el.textContent = meta.emoji;
 
-    var x = 30 + Math.random() * (W - 60);
-    var y = -60;
+    // Vertical spawn: anywhere EXCEPT a small exclusion zone around the goal
+    // so the rabbit isn't immediately walled off.
+    var y;
+    var attempts = 0;
+    do {
+      y = 40 + Math.random() * (H - 80);
+      attempts++;
+    } while (y < GOAL_Y + 80 && Math.random() < 0.6 && attempts < 5);
+
+    var x = -60;
     el.style.left = x + 'px';
     el.style.top  = y + 'px';
     gameArea.appendChild(el);
 
-    // speed scales with viewport height so it feels consistent across devices
-    var H = window.innerHeight;
-    var speed = (H / 3) + Math.random() * (H / 4); // px/sec
-
-    items.push({ el: el, x: x, y: y, speed: speed, type: type });
+    // Move RIGHTWARD (the "scene moving left to right")
+    var speed = (W / 6) + Math.random() * (W / 5); // px/sec, scales with viewport
+    items.push({ el: el, x: x, y: y, vx: speed, kind: meta.kind, emoji: meta.emoji, name: meta.name });
   }
 
-  function catchPuff(x, y, type) {
-    var emojis = type === 'berry' ? ['🍓','✨','💖']
-              : type === 'carrot' ? ['🥕','✨','💚']
-              : ['✨','✨','✨'];
+  function catchPuff(x, y, palette) {
+    var pool = palette || ['💨','😅','✨'];
     for (var i = 0; i < 3; i++) {
       var p = document.createElement('div');
       p.className = 'catch-puff';
-      p.textContent = emojis[i];
+      p.textContent = pool[i % pool.length];
       p.style.left = x + 'px';
       p.style.top  = y + 'px';
       var dx = (Math.random() - 0.5) * 60;
@@ -352,112 +389,97 @@
     }
   }
 
-  function checkCollision(item) {
-    // approximate item center (top-left of element + half size)
-    var size = 30;
-    var ix = item.x + size / 2;
-    var iy = item.y + size / 2;
-    var dx = ix - playerX;
-    var dy = iy - playerY;
-    var radius = 52; // catch radius — generous but fair
-    return (dx * dx + dy * dy) < (radius * radius);
-  }
-
-  // Reuses the proven-working catchPuff a few times for a win celebration.
-  function celebrateWin(x, y, type) {
+  function celebrateWin(x, y) {
+    var pool = ['💖','✨','🌸','🐰','🌟','💕'];
     for (var i = 0; i < 6; i++) {
-      var ox = (Math.random() - 0.5) * 120;
-      var oy = (Math.random() - 0.5) * 60;
-      catchPuff(x + ox, y + oy, type);
+      var ox = (Math.random() - 0.5) * 130;
+      var oy = (Math.random() - 0.5) * 70;
+      catchPuff(x + ox, y + oy, pool);
     }
   }
 
-  function endGame(reason) {
-    if (!running) return;                 // re-entrancy guard
+  function distance(x1, y1, x2, y2) {
+    var dx = x1 - x2, dy = y1 - y2;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function endGame(reason, emoji, name) {
+    if (!running) return;
     running = false;
     cancelAnimationFrame(animFrame);
-    finalBerriesEl.textContent = berries;
-    finalCarrotsEl.textContent = carrots;
 
     var titleEl    = document.getElementById('go-title');
     var subtitleEl = document.getElementById('go-subtitle');
     function setText(el, text) { if (el) el.textContent = text; }
-    if (reason === 'berry-win') {
-      setText(titleEl,    '🍓 Berry impressive!');
-      setText(subtitleEl, "you're berry, berry good! 🍓");
-    } else if (reason === 'carrot-win') {
-      setText(titleEl,    '🥕 Carrot-tastic!');
-      setText(subtitleEl, 'Awesome, I am rooting for you! 🥕');
-    } else {
-      setText(titleEl,    '🐸 caught!');
-      setText(subtitleEl, 'Yo Gaeguri~ 🐸');
+
+    if (reason === 'win') {
+      setText(titleEl,    'Squirrel found his rabbit girlfriend 🐰');
+      setText(subtitleEl, 'true love prevails ✨');
+    } else if (reason === 'lose-animal') {
+      setText(titleEl,    "Squirrel doesn't like " + name + ' ' + emoji);
+      setText(subtitleEl, 'back to searching… 🔍');
+    } else { // 'lose-obstacle'
+      setText(titleEl,    'Squirrel should climb higher to get to his rabbit girlfriend but today he ate too many acorns 🌰');
+      setText(subtitleEl, '(maybe lay off the acorns next time)');
     }
 
-    // Show the overlay FIRST so even if any visual flair throws, the bubble still appears.
     overlay.classList.add('show');
     overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
 
     try {
-      if (reason === 'berry-win' || reason === 'carrot-win') {
-        celebrateWin(playerX, playerY, reason === 'berry-win' ? 'berry' : 'carrot');
+      if (reason === 'win') {
+        celebrateWin(playerX, playerY);
       } else {
-        catchPuff(playerX, playerY, 'frog');
+        catchPuff(playerX, playerY);
       }
-    } catch (_) { /* never let visual flair block the end screen */ }
+    } catch (_) { /* never block the end screen */ }
   }
 
   function gameLoop(time) {
     if (!running) return;
     if (!lastTime) lastTime = time;
-    var dt = Math.min(0.05, (time - lastTime) / 1000); // clamp to avoid big jumps on tab switch
+    var dt = Math.min(0.05, (time - lastTime) / 1000);
     lastTime = time;
 
-    // smooth player follow toward target (gives a tiny lag, feels nicer)
+    // Player follow
     var lerp = isTouch ? 0.45 : 0.6;
     setPlayerPosition(
       playerX + (targetX - playerX) * lerp,
       playerY + (targetY - playerY) * lerp
     );
 
-    // tick down frog grace
-    if (frogGraceMs > 0) frogGraceMs -= dt * 1000;
+    // Check goal (rabbit) collision first — generous radius
+    if (distance(playerX, playerY, GOAL_X, GOAL_Y) < GOAL_RADIUS) {
+      endGame('win');
+      return;
+    }
 
-    // spawn items
+    // Spawn new items
     if (time - lastSpawnTime > nextSpawnDelay) {
       spawnItem();
       lastSpawnTime = time;
-      nextSpawnDelay = 600 + Math.random() * 500;
+      nextSpawnDelay = 380 + Math.random() * 300; // 380–680ms
     }
 
-    // update items
-    var H = window.innerHeight;
+    var W = window.innerWidth;
     items = items.filter(function (item) {
-      item.y += item.speed * dt;
-      item.el.style.top = item.y + 'px';
+      item.x += item.vx * dt;
+      item.el.style.left = item.x + 'px';
 
-      if (checkCollision(item)) {
-        if (item.type === 'frog') {
-          item.el.remove();
-          endGame('frog');
-          return false;
-        }
-        if (item.type === 'berry') {
-          berries++;
-          berryCountEl.textContent = berries;
-        } else {
-          carrots++;
-          carrotCountEl.textContent = carrots;
-        }
-        catchPuff(item.x + 16, item.y + 16, item.type);
+      // Off-screen right → cleanup
+      if (item.x > W + 60) {
         item.el.remove();
-
-        // first to 10 wins
-        if (berries >= 10) { endGame('berry-win');  return false; }
-        if (carrots >= 10) { endGame('carrot-win'); return false; }
         return false;
       }
-      if (item.y > H + 60) {
+
+      // Collision with squirrel?
+      if (distance(playerX, playerY, item.x, item.y) < 42) {
+        if (item.kind === 'animal') {
+          endGame('lose-animal', item.emoji, item.name);
+        } else {
+          endGame('lose-obstacle');
+        }
         item.el.remove();
         return false;
       }
@@ -474,29 +496,22 @@
 
   function startGame() {
     clearItems();
-    berries = 0; carrots = 0;
-    berryCountEl.textContent = '0';
-    carrotCountEl.textContent = '0';
     overlay.classList.remove('show');
-    overlay.style.display = '';          // clear inline override from endGame
+    overlay.style.display = '';
     overlay.setAttribute('aria-hidden', 'true');
     lastSpawnTime = 0;
     lastTime = 0;
-    nextSpawnDelay = 700;
-    frogGraceMs = 5000;
+    nextSpawnDelay = 500;
+    createGoal();
     createPlayer();
     instructions.classList.remove('hidden');
     running = true;
     animFrame = requestAnimationFrame(gameLoop);
 
-    // fade out instructions after a few seconds
     setTimeout(function () { instructions.classList.add('hidden'); }, 4500);
   }
 
-  // --- input ---
-  // Mouse listeners stay on document so the rabbit can track the cursor everywhere.
-  // Touch listeners are bound to gameArea ONLY — when the overlay shows it covers
-  // gameArea, so taps on overlay buttons never enter these handlers at all.
+  // Input
   function onMouseMove(e) {
     if (!running || isTouch) return;
     targetX = e.clientX;
@@ -524,13 +539,9 @@
   gameArea.addEventListener('touchmove',  onTouchMove,  { passive: false });
   gameArea.addEventListener('touchstart', onTouchStart, { passive: false });
 
-  // Restart button: click for mouse, touchend for touch (touchend preventDefault
-  // suppresses the synthesized click so we don't double-fire on mobile).
   restartBtn.addEventListener('click', function () { startGame(); });
   restartBtn.addEventListener('touchend', function (e) { e.preventDefault(); startGame(); });
 
-  // Back-home link: also wire an explicit JS navigation as backup in case the
-  // browser's default link follow is suppressed by something upstream.
   var homeLink = document.getElementById('home-link');
   if (homeLink) {
     homeLink.addEventListener('click', function (e) {
@@ -543,12 +554,10 @@
     });
   }
 
-  // keep player in bounds on resize / orientation change
   window.addEventListener('resize', function () {
     setPlayerPosition(playerX, playerY);
   });
 
-  // visibility: pause loop when tab is hidden, resume on visible
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
       cancelAnimationFrame(animFrame);
