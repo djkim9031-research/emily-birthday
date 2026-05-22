@@ -497,7 +497,7 @@
           <span class="bubble-text">My bags of mischief are brewing,<br>I am going berry crazy!!!</span>
           <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓🍓🍓</span>
           <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
-          <a href="game.html?v=6&intro=1" class="play-game-link">🎮 Play game</a>
+          <a href="game.html?v=7&intro=1" class="play-game-link">🎮 Play game</a>
         </div>
         <span class="tail tail-1" aria-hidden="true"></span>
         <span class="tail tail-2" aria-hidden="true"></span>
@@ -514,7 +514,7 @@
           <span class="berry-row" aria-hidden="true">🎁🎁🎁🎁🎁</span>
           <span class="berry-row" aria-hidden="true">🎁🎁🐸🎁🎁</span>
           <span class="berry-row" aria-hidden="true">🎁🎁🎁🎁🎁</span>
-          <a href="squirrel-game.html?v=6&intro=1" class="play-game-link">🎮 Play game</a>
+          <a href="squirrel-game.html?v=7&intro=1" class="play-game-link">🎮 Play game</a>
         </div>
         <span class="tail tail-1" aria-hidden="true"></span>
         <span class="tail tail-2" aria-hidden="true"></span>
@@ -526,9 +526,20 @@
     </div>
 
     <div class="rabbit-section">
-      <div class="candle-board" id="candle-board" aria-live="polite"></div>
+      <div class="thought-bubble" id="cake-bubble" role="status" aria-hidden="true">
+        <div class="bubble-body">
+          <span class="berry-row" aria-hidden="true">🎂🎂🎂🎂🎂</span>
+          <span class="berry-row" aria-hidden="true">🎂🌟🎂🌟🎂</span>
+          <span class="berry-row" aria-hidden="true">🎂🎂🎂🎂🎂</span>
+          <a href="cake-game.html?v=7&intro=1" class="play-game-link">🎮 Play game</a>
+        </div>
+        <span class="tail tail-1" aria-hidden="true"></span>
+        <span class="tail tail-2" aria-hidden="true"></span>
+        <span class="tail tail-3" aria-hidden="true"></span>
+      </div>
       <button class="rabbit-button" id="cake-btn"
-              aria-label="Tap the cake to blow out a candle">🎂</button>
+              aria-expanded="false" aria-controls="cake-bubble"
+              aria-label="Tap the cake to see what it's thinking">🎂</button>
     </div>
   </div>
 
@@ -584,7 +595,8 @@
   (function () {
     var pairs = [
       { btnId: 'rabbit-btn',   bubbleId: 'rabbit-bubble' },
-      { btnId: 'squirrel-btn', bubbleId: 'squirrel-bubble' }
+      { btnId: 'squirrel-btn', bubbleId: 'squirrel-bubble' },
+      { btnId: 'cake-btn',     bubbleId: 'cake-bubble' }
     ];
     var items = pairs
       .map(function (p) {
@@ -660,75 +672,6 @@
     }, { passive: true });
   })();
 
-  // Tap-the-cake candle-blowing game
-  (function () {
-    var btn = document.getElementById('cake-btn');
-    var board = document.getElementById('candle-board');
-    if (!btn || !board) return;
-
-    var TOTAL = 3;
-    var remaining = TOTAL;
-    var resetting = false;
-
-    function buildBoard() {
-      board.classList.remove('done');
-      board.innerHTML = '';
-      for (var i = 0; i < TOTAL; i++) {
-        var c = document.createElement('span');
-        c.className = 'candle';
-        c.textContent = '🕯️';
-        c.style.animationDelay = (i * 0.15) + 's';
-        board.appendChild(c);
-      }
-      remaining = TOTAL;
-    }
-
-    function spawnPuff(target) {
-      var rect = target.getBoundingClientRect();
-      var cx = rect.left + rect.width / 2;
-      var cy = rect.top + rect.height * 0.3;
-      var puffs = ['✨','💨','✨','✨'];
-      for (var i = 0; i < puffs.length; i++) {
-        var el = document.createElement('div');
-        el.className = 'puff';
-        el.textContent = puffs[i];
-        el.style.left = cx + 'px';
-        el.style.top = cy + 'px';
-        var dx = (Math.random() - 0.5) * 70;
-        var dy = -40 - Math.random() * 35;
-        el.style.setProperty('--pdx', dx + 'px');
-        el.style.setProperty('--pdy', dy + 'px');
-        document.body.appendChild(el);
-        (function (node) {
-          setTimeout(function () { node.remove(); }, 900);
-        })(el);
-      }
-    }
-
-    btn.addEventListener('click', function () {
-      if (resetting || remaining <= 0) return;
-      var candles = board.querySelectorAll('.candle:not(.out)');
-      if (candles.length > 0) {
-        candles[candles.length - 1].classList.add('out');
-        remaining--;
-      }
-      spawnPuff(btn);
-
-      if (remaining === 0) {
-        resetting = true;
-        setTimeout(function () {
-          board.classList.add('done');
-          board.textContent = '🎉 wish granted!';
-        }, 550);
-        setTimeout(function () {
-          buildBoard();
-          resetting = false;
-        }, 2600);
-      }
-    });
-
-    buildBoard();
-  })();
 
   // Memory match game
   (function () {

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🎂 Wish Constellation — Emily's Birthday Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #BDE7FF;
+    --bg-2: #C8F5D2;
+    --text: #2c3e50;
+    --accent: #4a6fa5;
+    --accent-soft: #6a8fb5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Fredoka', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .game-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 0.85rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .game-title {
+    font-size: clamp(0.95rem, 3.2vw, 1.25rem);
+    font-weight: 600;
+    color: var(--accent);
+    text-shadow: 1px 1px 0 white;
+    background: rgba(255, 255, 255, 0.55);
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+  }
+
+  /* timer progress bar at the very top */
+  .timer-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.35);
+    z-index: 4;
+    pointer-events: none;
+  }
+  .timer-bar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #FFD1DC, #FFE5A0, #BDE7FF);
+    transition: width 0.1s linear;
+  }
+
+  .game-area {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    perspective: 1200px;
+    perspective-origin: 50% 45%;
+  }
+  /* 3D scene: the constellation itself sits in a preserve-3d container that
+     drifts gently on a continuous ambient rotation, plus a subtle pointer tilt
+     applied via JS (sets --tx / --ty CSS vars). */
+  .scene-3d {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg));
+    animation: ambient-drift 32s ease-in-out infinite;
+    will-change: transform;
+  }
+  @keyframes ambient-drift {
+    0%, 100% { transform: rotateX(calc(var(--tx, 0deg) - 2deg)) rotateY(calc(var(--ty, 0deg) - 3deg)); }
+    50%      { transform: rotateX(calc(var(--tx, 0deg) + 2deg)) rotateY(calc(var(--ty, 0deg) + 3deg)); }
+  }
+
+  /* the SVG trail that connects already-touched sparkles */
+  #trail-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* the floating 3D cake at the centre of the constellation — purely decorative */
+  .cake-3d {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: clamp(3.5rem, 12vw, 6rem);
+    transform: translate(-50%, -50%) translateZ(-120px) rotateY(0deg);
+    transform-style: preserve-3d;
+    pointer-events: none;
+    z-index: 0;
+    user-select: none;
+    filter: drop-shadow(0 14px 20px rgba(74, 111, 165, 0.35));
+    animation: cake-spin 14s linear infinite;
+    opacity: 0.85;
+  }
+  @keyframes cake-spin {
+    0%   { transform: translate(-50%, -50%) translateZ(-120px) rotateY(0deg); }
+    100% { transform: translate(-50%, -50%) translateZ(-120px) rotateY(360deg); }
+  }
+
+  /* numbered sparkle nodes — each has a random --z CSS var for 3D depth */
+  .sparkle {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--accent);
+    box-shadow: 0 0 14px rgba(255, 230, 150, 0.55), 0 4px 8px rgba(74, 111, 165, 0.18);
+    transform: translate(-50%, -50%) translateZ(var(--z, 0px));
+    transform-style: preserve-3d;
+    user-select: none;
+    pointer-events: none;
+    transition: background 0.35s ease, box-shadow 0.35s ease, color 0.35s ease;
+    z-index: 2;
+  }
+  .sparkle .sparkle-num {
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+  .sparkle .sparkle-glyph {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 0.85rem;
+    filter: drop-shadow(0 1px 2px rgba(74, 111, 165, 0.25));
+  }
+  .sparkle.lit {
+    background: linear-gradient(135deg, #FFE5EC 0%, #FFF4D6 100%);
+    box-shadow: 0 0 22px rgba(255, 200, 100, 0.75),
+                0 0 48px rgba(255, 200, 100, 0.35),
+                0 4px 12px rgba(74, 111, 165, 0.25);
+    color: #c26a89;
+  }
+  .sparkle.target {
+    animation: target-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes target-pulse {
+    0%, 100% { transform: translate(-50%, -50%) translateZ(var(--z, 0px)) scale(1);   }
+    50%      { transform: translate(-50%, -50%) translateZ(var(--z, 0px)) scale(1.18); }
+  }
+
+  /* the wish word that floats up after each successful sparkle hit */
+  .wish-word {
+    position: fixed;
+    pointer-events: none;
+    z-index: 6;
+    font-size: clamp(1rem, 3.4vw, 1.25rem);
+    font-weight: 600;
+    color: var(--accent);
+    transform: translate(-50%, -50%);
+    animation: wish-float 2s ease-out forwards;
+    text-shadow: 0 1px 4px rgba(255, 255, 255, 0.85);
+    white-space: nowrap;
+    user-select: none;
+  }
+  @keyframes wish-float {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translate(0, -85px) scale(1.1); }
+  }
+
+  /* generic catch-puff (reused for sparkle hits + win celebration) */
+  .catch-puff {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5;
+    font-size: 1.1rem;
+    user-select: none;
+    animation: puff-rise 0.9s ease-out forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes puff-rise {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--pdx, 0), var(--pdy, -50px)) scale(1.2); }
+  }
+
+  /* bottom-of-screen instructions hint, fades after a few seconds */
+  .game-instructions {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.35rem 0.95rem;
+    border-radius: 999px;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+    text-align: center;
+    max-width: 92vw;
+  }
+  .game-instructions.hidden { opacity: 0; }
+
+  /* shared modal styles (clone of game.html) */
+  .game-over-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 1rem;
+  }
+  .game-over-overlay.show { display: flex; }
+
+  .game-over-bubble {
+    background: white;
+    border-radius: 28px;
+    padding: 1.8rem 2rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 14px 36px rgba(74, 111, 165, 0.3);
+    max-width: min(440px, 92vw);
+    position: relative;
+    animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .game-over-bubble::before,
+  .game-over-bubble::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 -4px 10px rgba(74, 111, 165, 0.10);
+    z-index: -1;
+  }
+  .game-over-bubble::before { top: -20px; left: 16%; width: 64px; height: 64px; }
+  .game-over-bubble::after  { top: -12px; right: 14%; width: 42px; height: 42px; }
+
+  @keyframes pop-in {
+    0%   { opacity: 0; transform: scale(0.4); }
+    60%  { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .game-over-bubble h2 {
+    font-size: clamp(1.15rem, 4vw, 1.55rem);
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .game-over-bubble .yo-gaeguri {
+    font-size: clamp(1rem, 3.6vw, 1.2rem);
+    color: var(--accent-soft);
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  /* wish word pill list shown on the win-screen */
+  .wish-list {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+    margin: 0 0 1.25rem;
+  }
+  .wish-list.show { display: flex; }
+  .wish-pill {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #FFE5EC, #FFF4D6);
+    color: var(--text);
+    box-shadow: 0 2px 4px rgba(74, 111, 165, 0.12);
+    white-space: nowrap;
+  }
+
+  .game-over-buttons {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .game-over-buttons a,
+  .game-over-buttons button {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(74, 111, 165, 0.22);
+    transition: transform 0.15s ease;
+    display: inline-block;
+  }
+  .game-over-buttons a:hover,
+  .game-over-buttons button:hover  { transform: scale(1.06); }
+  .game-over-buttons a:active,
+  .game-over-buttons button:active { transform: scale(0.96); }
+  .game-over-buttons a:focus-visible,
+  .game-over-buttons button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* intro overlay */
+  .intro-overlay.show { display: flex; }
+  .intro-bubble { max-width: min(440px, 92vw); }
+  .intro-bubble h2 {
+    font-size: clamp(1.3rem, 5vw, 1.7rem);
+    margin-bottom: 0.85rem;
+  }
+  .intro-body {
+    text-align: left;
+    margin: 0 auto 1.1rem;
+    max-width: 360px;
+  }
+  .intro-line {
+    font-size: clamp(0.95rem, 3.4vw, 1.05rem);
+    margin: 0.5rem 0;
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .intro-line strong { color: var(--accent); }
+  .intro-play-btn {
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(74, 111, 165, 0.25);
+    transition: transform 0.15s ease;
+  }
+  .intro-play-btn:hover  { transform: scale(1.06); }
+  .intro-play-btn:active { transform: scale(0.96); }
+  .intro-play-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+
+<header class="game-header">
+  <div class="game-title">🎂 Wish Constellation</div>
+</header>
+
+<div class="game-area" id="game-area">
+  <div class="scene-3d" id="scene-3d">
+    <div class="cake-3d" id="cake-3d" aria-hidden="true">🎂</div>
+    <svg id="trail-svg" xmlns="http://www.w3.org/2000/svg">
+      <polyline id="trail-line" fill="none" stroke="rgba(255, 193, 210, 0.85)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+    </svg>
+  </div>
+</div>
+
+<div class="game-instructions" id="game-instructions">
+  drag through the ✨ in order — 1, 2, 3 … 12
+</div>
+
+<!-- intro overlay -->
+<div class="game-over-overlay intro-overlay" id="intro-overlay" aria-hidden="true">
+  <div class="game-over-bubble intro-bubble">
+    <h2>🎂 Wish Constellation</h2>
+    <div class="intro-body">
+      <p class="intro-line"><strong>🎮 How:</strong> drag your finger or cursor through the sparkles</p>
+      <p class="intro-line"><strong>🎯 Order:</strong> follow the numbers <strong>1 → 12</strong> in sequence</p>
+      <p class="intro-line"><strong>🏆 Win:</strong> seal the wish before the stars dim (18s)</p>
+      <p class="intro-line"><strong>💫 Note:</strong> wrong star? no penalty — just gently retry</p>
+    </div>
+    <button type="button" id="intro-play-btn" class="intro-play-btn">Play! 🎮</button>
+  </div>
+</div>
+
+<!-- game-over overlay -->
+<div class="game-over-overlay" id="game-over-overlay" aria-hidden="true">
+  <div class="game-over-bubble" role="alertdialog" aria-labelledby="go-title" aria-describedby="go-subtitle">
+    <h2 id="go-title">🎂 Your birthday wish has been sealed in the stars!</h2>
+    <p class="yo-gaeguri" id="go-subtitle">all your wishes will come true ✨</p>
+    <div class="wish-list" id="wish-list"></div>
+    <div class="game-over-buttons">
+      <button type="button" id="restart-btn">🔁 Play again</button>
+      <a href="index.html?v=7" id="home-link">🏠 Back home</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var gameArea     = document.getElementById('game-area');
+  var timerBar     = document.getElementById('timer-bar');
+  var trailLine    = document.getElementById('trail-line');
+  var overlay      = document.getElementById('game-over-overlay');
+  var introOverlay = document.getElementById('intro-overlay');
+  var introPlayBtn = document.getElementById('intro-play-btn');
+  var restartBtn   = document.getElementById('restart-btn');
+  var instructions = document.getElementById('game-instructions');
+  var wishListEl   = document.getElementById('wish-list');
+
+  var WISHES = [
+    'joy ✨', 'love 💖', 'laughter 😄', 'peace 🕊️',
+    'magic 🪄', 'kindness 🤗', 'wonder 🌟', 'hope 🌈',
+    'sparkle ✨', 'friendship 🫶', 'happiness 🎉', 'sweetness 🍰'
+  ];
+  var TIME_LIMIT_MS = 18000;
+  var HIT_RADIUS = 48;
+  var SPARKLE_COUNT = 12;
+  var GRID_COLS = 4;
+  var GRID_ROWS = 3;
+
+  var sparkles = [];
+  var progress = 0;
+  var running  = false;
+  var animFrame = null;
+  var timerStart = 0;
+  var pauseStarted = 0;
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function clearSparkles() {
+    sparkles.forEach(function (s) { s.el.remove(); });
+    sparkles = [];
+  }
+
+  function layoutSparkles() {
+    clearSparkles();
+    progress = 0;
+    trailLine.setAttribute('points', '');
+
+    var W = window.innerWidth, H = window.innerHeight;
+    var marginX = 50;
+    var marginTop = 90;
+    var marginBottom = 80;
+    var cellW = (W - 2 * marginX) / GRID_COLS;
+    var cellH = (H - marginTop - marginBottom) / GRID_ROWS;
+
+    // Build grid-with-jitter so sparkles are spread out and never overlap.
+    var positions = [];
+    for (var r = 0; r < GRID_ROWS; r++) {
+      for (var c = 0; c < GRID_COLS; c++) {
+        var jx = (Math.random() - 0.5) * cellW * 0.5;
+        var jy = (Math.random() - 0.5) * cellH * 0.45;
+        positions.push({
+          x: marginX + cellW * (c + 0.5) + jx,
+          y: marginTop + cellH * (r + 0.5) + jy
+        });
+      }
+    }
+    shuffle(positions);
+
+    var scene = document.getElementById('scene-3d');
+    for (var i = 0; i < SPARKLE_COUNT; i++) {
+      var pos = positions[i];
+      var el = document.createElement('div');
+      el.className = 'sparkle';
+      el.innerHTML =
+        '<span class="sparkle-num">' + (i + 1) + '</span>' +
+        '<span class="sparkle-glyph">✨</span>';
+      el.style.left = pos.x + 'px';
+      el.style.top  = pos.y + 'px';
+      // give each sparkle a random 3D depth so the constellation feels dimensional
+      el.style.setProperty('--z', (-90 + Math.random() * 160) + 'px');
+      scene.appendChild(el);
+      sparkles.push({ x: pos.x, y: pos.y, num: i + 1, el: el, lit: false });
+    }
+
+    sparkles[0].el.classList.add('target');
+  }
+
+  function updateTrail() {
+    var pts = [];
+    for (var i = 0; i < sparkles.length; i++) {
+      if (sparkles[i].lit) {
+        pts.push(sparkles[i].x + ',' + sparkles[i].y);
+      } else { break; }
+    }
+    trailLine.setAttribute('points', pts.join(' '));
+  }
+
+  function spawnWishWord(x, y, text) {
+    var w = document.createElement('div');
+    w.className = 'wish-word';
+    w.textContent = text;
+    w.style.left = x + 'px';
+    w.style.top  = y + 'px';
+    document.body.appendChild(w);
+    (function (n) { setTimeout(function () { n.remove(); }, 2000); })(w);
+  }
+
+  function catchPuff(x, y) {
+    var emojis = ['✨', '🌟', '💫'];
+    for (var i = 0; i < 3; i++) {
+      var p = document.createElement('div');
+      p.className = 'catch-puff';
+      p.textContent = emojis[i];
+      p.style.left = x + 'px';
+      p.style.top  = y + 'px';
+      var dx = (Math.random() - 0.5) * 60;
+      var dy = -30 - Math.random() * 30;
+      p.style.setProperty('--pdx', dx + 'px');
+      p.style.setProperty('--pdy', dy + 'px');
+      document.body.appendChild(p);
+      (function (n) { setTimeout(function () { n.remove(); }, 900); })(p);
+    }
+  }
+
+  function celebrate() {
+    var pool = ['🌟', '✨', '💫', '🎂', '💖', '🎉'];
+    var cx = window.innerWidth / 2;
+    var cy = window.innerHeight / 2;
+    for (var i = 0; i < 24; i++) {
+      var p = document.createElement('div');
+      p.className = 'catch-puff';
+      p.textContent = pool[i % pool.length];
+      p.style.left = cx + 'px';
+      p.style.top  = cy + 'px';
+      p.style.fontSize = (1.1 + Math.random() * 1.4) + 'rem';
+      var angle = (Math.PI * 2 * i / 24) + (Math.random() - 0.5) * 0.3;
+      var dist = 100 + Math.random() * 140;
+      var dx = Math.cos(angle) * dist;
+      var dy = Math.sin(angle) * dist - 60;
+      p.style.setProperty('--pdx', dx + 'px');
+      p.style.setProperty('--pdy', dy + 'px');
+      document.body.appendChild(p);
+      (function (n) { setTimeout(function () { n.remove(); }, 1400); })(p);
+    }
+  }
+
+  function hitTarget() {
+    var s = sparkles[progress];
+    s.lit = true;
+    s.el.classList.add('lit');
+    s.el.classList.remove('target');
+    spawnWishWord(s.x, s.y, WISHES[progress]);
+    catchPuff(s.x, s.y);
+    progress++;
+    updateTrail();
+    if (progress >= SPARKLE_COUNT) {
+      endGame('win');
+    } else {
+      sparkles[progress].el.classList.add('target');
+    }
+  }
+
+  function checkHit(x, y) {
+    if (!running || progress >= SPARKLE_COUNT) return;
+    var s = sparkles[progress];
+    var dx = s.x - x, dy = s.y - y;
+    if (dx * dx + dy * dy < HIT_RADIUS * HIT_RADIUS) {
+      hitTarget();
+    }
+  }
+
+  function onMouseMove(e) { checkHit(e.clientX, e.clientY); }
+  function onTouchMove(e) {
+    if (e.touches && e.touches[0]) {
+      checkHit(e.touches[0].clientX, e.touches[0].clientY);
+    }
+    e.preventDefault();
+  }
+  function onTouchStart(e) {
+    if (e.touches && e.touches[0]) {
+      checkHit(e.touches[0].clientX, e.touches[0].clientY);
+    }
+    e.preventDefault();
+  }
+
+  function setText(el, text) { if (el) el.textContent = text; }
+
+  function endGame(reason) {
+    if (!running) return;
+    running = false;
+    cancelAnimationFrame(animFrame);
+
+    var titleEl    = document.getElementById('go-title');
+    var subtitleEl = document.getElementById('go-subtitle');
+
+    if (reason === 'win') {
+      setText(titleEl,    '🎂 Your birthday wish has been sealed in the stars!');
+      setText(subtitleEl, 'all your wishes will come true ✨');
+      if (wishListEl) {
+        wishListEl.innerHTML = '';
+        WISHES.forEach(function (w) {
+          var pill = document.createElement('span');
+          pill.className = 'wish-pill';
+          pill.textContent = w;
+          wishListEl.appendChild(pill);
+        });
+        wishListEl.classList.add('show');
+      }
+    } else {
+      setText(titleEl,    'the stars dimmed too soon 🌙');
+      setText(subtitleEl, 'give the wish another try');
+      if (wishListEl) wishListEl.classList.remove('show');
+    }
+
+    overlay.classList.add('show');
+    overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden', 'false');
+
+    try { if (reason === 'win') celebrate(); } catch (_) {}
+  }
+
+  function gameLoop(time) {
+    if (!running) return;
+    if (!timerStart) timerStart = time;
+    var elapsed = time - timerStart;
+    var remaining = TIME_LIMIT_MS - elapsed;
+    if (remaining <= 0) {
+      timerBar.style.width = '0%';
+      endGame('timeout');
+      return;
+    }
+    timerBar.style.width = (remaining / TIME_LIMIT_MS * 100) + '%';
+    animFrame = requestAnimationFrame(gameLoop);
+  }
+
+  function startGame() {
+    overlay.classList.remove('show');
+    overlay.style.display = '';
+    overlay.setAttribute('aria-hidden', 'true');
+    if (wishListEl) wishListEl.classList.remove('show');
+    layoutSparkles();
+    timerStart = 0;
+    pauseStarted = 0;
+    timerBar.style.width = '100%';
+    instructions.classList.remove('hidden');
+    running = true;
+    animFrame = requestAnimationFrame(gameLoop);
+    setTimeout(function () { instructions.classList.add('hidden'); }, 4500);
+  }
+
+  // Pointer-driven subtle 3D tilt of the whole scene — gentle parallax effect.
+  var scene3d = document.getElementById('scene-3d');
+  function applyTilt(x, y) {
+    if (!scene3d) return;
+    var nx = x / window.innerWidth - 0.5;   // -0.5 .. 0.5
+    var ny = y / window.innerHeight - 0.5;
+    scene3d.style.setProperty('--tx', (ny *  6).toFixed(2) + 'deg');
+    scene3d.style.setProperty('--ty', (nx * -8).toFixed(2) + 'deg');
+  }
+
+  // Input
+  document.addEventListener('mousemove',  function (e) { applyTilt(e.clientX, e.clientY); onMouseMove(e); });
+  gameArea.addEventListener('touchmove',  function (e) {
+    if (e.touches && e.touches[0]) applyTilt(e.touches[0].clientX, e.touches[0].clientY);
+    onTouchMove(e);
+  }, { passive: false });
+  gameArea.addEventListener('touchstart', onTouchStart, { passive: false });
+
+  restartBtn.addEventListener('click', function () { startGame(); });
+  restartBtn.addEventListener('touchend', function (e) { e.preventDefault(); startGame(); });
+
+  var homeLink = document.getElementById('home-link');
+  if (homeLink) {
+    homeLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.location.href = homeLink.getAttribute('href');
+    });
+    homeLink.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      window.location.href = homeLink.getAttribute('href');
+    });
+  }
+
+  window.addEventListener('resize', function () {
+    // re-layout sparkles only if game is running; otherwise leave as-is
+    if (running) layoutSparkles();
+  });
+
+  // pause timer when tab hidden so the user doesn't get penalized
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      cancelAnimationFrame(animFrame);
+      if (running) pauseStarted = performance.now();
+    } else if (running) {
+      if (pauseStarted && timerStart) {
+        timerStart += performance.now() - pauseStarted;
+      }
+      pauseStarted = 0;
+      animFrame = requestAnimationFrame(gameLoop);
+    }
+  });
+
+  // --- intro overlay (only on first arrival from main page) ---
+  function shouldShowIntro() { return /[?&]intro=1\b/.test(window.location.search); }
+  function dismissIntro() {
+    if (introOverlay) {
+      introOverlay.classList.remove('show');
+      introOverlay.style.display = 'none';
+      introOverlay.setAttribute('aria-hidden', 'true');
+    }
+    if (window.history && window.history.replaceState) {
+      var search = window.location.search
+        .replace(/([?&])intro=1(&|$)/, '$1')
+        .replace(/[?&]$/, '');
+      window.history.replaceState({}, '', window.location.pathname + search);
+    }
+  }
+  if (introPlayBtn) {
+    introPlayBtn.addEventListener('click', function () { dismissIntro(); startGame(); });
+    introPlayBtn.addEventListener('touchend', function (e) { e.preventDefault(); dismissIntro(); startGame(); });
+  }
+  if (shouldShowIntro() && introOverlay) {
+    introOverlay.classList.add('show');
+    introOverlay.style.display = 'flex';
+    introOverlay.setAttribute('aria-hidden', 'false');
+  } else {
+    startGame();
+  }
+})();
+</script>
+</body>
+</html>
