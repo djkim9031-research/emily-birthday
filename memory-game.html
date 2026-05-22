@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🎴 Memory Match — Emily's Birthday Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #BDE7FF;
+    --bg-2: #C8F5D2;
+    --text: #2c3e50;
+    --accent: #4a6fa5;
+    --accent-soft: #6a8fb5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-family: 'Fredoka', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .game-header {
+    position: sticky;
+    top: 0;
+    padding: 0.85rem 1rem 0.5rem;
+    display: flex;
+    justify-content: center;
+    z-index: 5;
+  }
+  .game-title {
+    font-size: clamp(0.95rem, 3.2vw, 1.25rem);
+    font-weight: 600;
+    color: var(--accent);
+    text-shadow: 1px 1px 0 white;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.35rem 0.95rem;
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(74, 111, 165, 0.15);
+  }
+
+  main {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 1rem 1rem 2.5rem;
+    text-align: center;
+  }
+
+  .memory-status {
+    font-size: clamp(0.95rem, 3.2vw, 1.05rem);
+    color: var(--accent-soft);
+    margin-bottom: 1rem;
+    min-height: 1.5em;
+  }
+
+  .memory-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+  .memory-card {
+    aspect-ratio: 1 / 1;
+    perspective: 800px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .memory-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 14px; }
+
+  .memory-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .memory-card.show .memory-card-inner,
+  .memory-card.matched .memory-card-inner { transform: rotateY(180deg); }
+
+  .memory-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(74, 111, 165, 0.18);
+    user-select: none;
+  }
+  .memory-card-back {
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    font-size: 1.4rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .memory-card-front {
+    background: white;
+    transform: rotateY(180deg);
+    font-size: clamp(1.6rem, 5vw, 2.3rem);
+  }
+  .memory-card.matched .memory-card-front {
+    background: linear-gradient(135deg, #FFE5EC, #FFF4D6);
+    animation: matched-pulse 0.7s ease;
+  }
+  @keyframes matched-pulse {
+    0%, 100% { transform: rotateY(180deg) scale(1); }
+    50%      { transform: rotateY(180deg) scale(1.12); }
+  }
+
+  .memory-actions {
+    margin-top: 1.25rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .memory-actions button,
+  .memory-actions a {
+    padding: 0.55rem 1.15rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(74, 111, 165, 0.2);
+    transition: transform 0.15s ease;
+    display: inline-block;
+  }
+  .memory-actions button.primary,
+  .memory-actions a.primary {
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+  }
+  .memory-actions button:hover,
+  .memory-actions a:hover  { transform: scale(1.06); }
+  .memory-actions button:active,
+  .memory-actions a:active { transform: scale(0.96); }
+
+  /* burst emoji used for the win celebration (same as other games) */
+  .burst-emoji {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5;
+    user-select: none;
+    font-size: 1.4rem;
+    animation: burst 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes burst {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+    20%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--dx, 0), var(--dy, -80px)) scale(1.1) rotate(var(--rot, 90deg)); }
+  }
+
+  /* shared overlay (intro + win) */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 1rem;
+  }
+  .overlay.show { display: flex; }
+  .overlay-card {
+    background: white;
+    border-radius: 28px;
+    padding: 1.8rem 2rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 14px 36px rgba(74, 111, 165, 0.3);
+    max-width: min(440px, 92vw);
+    position: relative;
+    animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .overlay-card::before,
+  .overlay-card::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 -4px 10px rgba(74, 111, 165, 0.10);
+    z-index: -1;
+  }
+  .overlay-card::before { top: -20px; left: 16%; width: 64px; height: 64px; }
+  .overlay-card::after  { top: -12px; right: 14%; width: 42px; height: 42px; }
+  @keyframes pop-in {
+    0%   { opacity: 0; transform: scale(0.4); }
+    60%  { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .overlay-card h2 {
+    font-size: clamp(1.3rem, 5vw, 1.7rem);
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .overlay-card .subline {
+    font-size: clamp(1rem, 3.6vw, 1.15rem);
+    color: var(--accent-soft);
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+  .intro-body {
+    text-align: left;
+    margin: 0 auto 1.1rem;
+    max-width: 360px;
+  }
+  .intro-line {
+    font-size: clamp(0.95rem, 3.4vw, 1.05rem);
+    margin: 0.5rem 0;
+    line-height: 1.45;
+  }
+  .intro-line strong { color: var(--accent); }
+  .overlay-buttons {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .overlay-buttons button,
+  .overlay-buttons a {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.3rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(74, 111, 165, 0.22);
+    transition: transform 0.15s ease;
+    font-weight: 600;
+  }
+  .overlay-buttons button:hover,
+  .overlay-buttons a:hover  { transform: scale(1.06); }
+  .overlay-buttons button:active,
+  .overlay-buttons a:active { transform: scale(0.96); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="game-header">
+  <div class="game-title">🎴 Memory Match</div>
+</header>
+
+<main>
+  <p class="memory-status" id="memory-status">Find the matching pairs!</p>
+  <div class="memory-board" id="memory-board" role="grid"></div>
+  <div class="memory-actions">
+    <button class="primary" id="memory-reset" type="button">🔁 Shuffle</button>
+    <a href="index.html?v=9" id="home-link">🏠 Back home</a>
+  </div>
+</main>
+
+<!-- intro overlay -->
+<div class="overlay" id="intro-overlay" aria-hidden="true">
+  <div class="overlay-card">
+    <h2>🎴 Memory Match</h2>
+    <div class="intro-body">
+      <p class="intro-line"><strong>🎮 How:</strong> tap two cards to flip them face-up</p>
+      <p class="intro-line"><strong>🎯 Goal:</strong> find all <strong>6 pairs</strong> of matching emojis</p>
+      <p class="intro-line"><strong>🏆 Win:</strong> match all pairs — fewer flips = better!</p>
+      <p class="intro-line"><strong>🔁 Shuffle:</strong> tap shuffle anytime to start a new round</p>
+    </div>
+    <button type="button" id="intro-start-btn" class="overlay-buttons" style="background: linear-gradient(135deg, #BDE7FF, #C8F5D2); border: none; padding: 0.65rem 1.5rem; border-radius: 999px; font-family: inherit; font-size: 1.05rem; font-weight: 600; color: var(--text); cursor: pointer; box-shadow: 0 5px 12px rgba(74, 111, 165, 0.25);">Start! 🎴</button>
+  </div>
+</div>
+
+<!-- win overlay -->
+<div class="overlay" id="win-overlay" aria-hidden="true">
+  <div class="overlay-card" role="alertdialog" aria-labelledby="win-title" aria-describedby="win-subline">
+    <h2 id="win-title">🎉 Memory master!</h2>
+    <p class="subline" id="win-subline">you found all 6 pairs in <strong id="win-moves">0</strong> flips ✨</p>
+    <div class="overlay-buttons">
+      <button type="button" id="win-restart">🔁 Play again</button>
+      <a href="index.html?v=9" id="win-home">🏠 Back home</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var board       = document.getElementById('memory-board');
+  var statusEl    = document.getElementById('memory-status');
+  var resetBtn    = document.getElementById('memory-reset');
+  var winOverlay  = document.getElementById('win-overlay');
+  var winMovesEl  = document.getElementById('win-moves');
+  var winRestart  = document.getElementById('win-restart');
+  var winHome     = document.getElementById('win-home');
+  var introOverlay = document.getElementById('intro-overlay');
+  var startBtn    = document.getElementById('intro-start-btn');
+  var homeLink    = document.getElementById('home-link');
+
+  var EMOJIS = ['🐰', '🐿️', '💖', '❤️', '🎂', '🍓'];
+  var first = null;
+  var lock = false;
+  var matched = 0;
+  var moves = 0;
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function updateStatus() {
+    statusEl.textContent =
+      'pairs: ' + matched + ' / ' + EMOJIS.length +
+      '   ·   flips: ' + moves;
+  }
+
+  function celebrate() {
+    var rect = board.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var pool = ['🐰','🐿️','💖','❤️','🍓','🌸','✨','🎉','🎂','🎴'];
+    for (var i = 0; i < 26; i++) {
+      var el = document.createElement('div');
+      el.className = 'burst-emoji';
+      el.textContent = pool[Math.floor(Math.random() * pool.length)];
+      el.style.left = cx + 'px';
+      el.style.top = cy + 'px';
+      el.style.fontSize = (1.2 + Math.random() * 1.3) + 'rem';
+      var angle = Math.PI * 2 * i / 26 + (Math.random() - 0.5) * 0.4;
+      var dist = 90 + Math.random() * 110;
+      el.style.setProperty('--dx',  (Math.cos(angle) * dist) + 'px');
+      el.style.setProperty('--dy',  (Math.sin(angle) * dist - 60) + 'px');
+      el.style.setProperty('--rot', ((Math.random() - 0.5) * 360) + 'deg');
+      document.body.appendChild(el);
+      (function (n) { setTimeout(function () { n.remove(); }, 1600); })(el);
+    }
+  }
+
+  function showWin() {
+    winMovesEl.textContent = moves;
+    winOverlay.classList.add('show');
+    winOverlay.style.display = 'flex';
+    winOverlay.setAttribute('aria-hidden', 'false');
+    celebrate();
+  }
+  function hideWin() {
+    winOverlay.classList.remove('show');
+    winOverlay.style.display = '';
+    winOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function onCardClick(card) {
+    if (lock) return;
+    if (card.classList.contains('show') || card.classList.contains('matched')) return;
+    card.classList.add('show');
+    moves++;
+    updateStatus();
+
+    if (!first) { first = card; return; }
+
+    lock = true;
+    if (first.dataset.emoji === card.dataset.emoji) {
+      first.classList.add('matched');
+      card.classList.add('matched');
+      matched++;
+      first = null;
+      lock = false;
+      updateStatus();
+      if (matched === EMOJIS.length) {
+        setTimeout(showWin, 450);
+      }
+    } else {
+      var a = first, b = card;
+      setTimeout(function () {
+        a.classList.remove('show');
+        b.classList.remove('show');
+        first = null;
+        lock = false;
+      }, 850);
+    }
+  }
+
+  function buildBoard() {
+    board.innerHTML = '';
+    first = null;
+    lock = false;
+    matched = 0;
+    moves = 0;
+    hideWin();
+
+    var deck = shuffle(EMOJIS.concat(EMOJIS));
+    deck.forEach(function (emoji) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'memory-card';
+      card.dataset.emoji = emoji;
+      card.setAttribute('aria-label', 'Memory card, click to reveal');
+      card.innerHTML =
+        '<div class="memory-card-inner">' +
+          '<div class="memory-card-face memory-card-back" aria-hidden="true">🎀</div>' +
+          '<div class="memory-card-face memory-card-front" aria-hidden="true">' + emoji + '</div>' +
+        '</div>';
+      card.addEventListener('click', function () { onCardClick(card); });
+      board.appendChild(card);
+    });
+    updateStatus();
+  }
+
+  resetBtn.addEventListener('click', buildBoard);
+  winRestart.addEventListener('click', buildBoard);
+  winRestart.addEventListener('touchend', function (e) { e.preventDefault(); buildBoard(); });
+
+  // explicit JS navigation for home links (mirrors other game pages)
+  function wireHome(link) {
+    if (!link) return;
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.location.href = link.getAttribute('href');
+    });
+    link.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      window.location.href = link.getAttribute('href');
+    });
+  }
+  wireHome(homeLink);
+  wireHome(winHome);
+
+  // ---- intro overlay (only on first arrival from main page) ----
+  function shouldShowIntro() { return /[?&]intro=1\b/.test(window.location.search); }
+  function dismissIntro() {
+    introOverlay.classList.remove('show');
+    introOverlay.style.display = 'none';
+    introOverlay.setAttribute('aria-hidden', 'true');
+    if (window.history && window.history.replaceState) {
+      var search = window.location.search
+        .replace(/([?&])intro=1(&|$)/, '$1')
+        .replace(/[?&]$/, '');
+      window.history.replaceState({}, '', window.location.pathname + search);
+    }
+  }
+  startBtn.addEventListener('click', dismissIntro);
+  startBtn.addEventListener('touchend', function (e) { e.preventDefault(); dismissIntro(); });
+
+  if (shouldShowIntro()) {
+    introOverlay.classList.add('show');
+    introOverlay.style.display = 'flex';
+    introOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  buildBoard();
+})();
+</script>
+</body>
+</html>
