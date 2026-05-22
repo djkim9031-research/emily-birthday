@@ -153,6 +153,109 @@
     opacity: 0.7;
   }
 
+  /* rabbit + thought-bubble */
+  .rabbit-section {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rabbit-button {
+    font-size: 2.5rem;
+    background: white;
+    border: none;
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 5px 14px rgba(74, 111, 165, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    transition: transform 0.2s ease;
+    animation: rabbit-wiggle 4s ease-in-out infinite;
+  }
+  .rabbit-button:hover  { transform: scale(1.1); }
+  .rabbit-button:active { transform: scale(0.95); }
+  .rabbit-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+
+  @keyframes rabbit-wiggle {
+    0%, 88%, 100% { transform: rotate(0); }
+    90% { transform: rotate(-8deg); }
+    93% { transform: rotate(8deg); }
+    96% { transform: rotate(-5deg); }
+    98% { transform: rotate(3deg); }
+  }
+
+  .thought-bubble {
+    display: none;
+    position: relative;
+    margin-bottom: 1.75rem;
+    max-width: min(360px, 88vw);
+  }
+  .thought-bubble.show {
+    display: block;
+    animation: bubble-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: 50% 100%;
+  }
+
+  @keyframes bubble-pop {
+    0%   { opacity: 0; transform: scale(0.3); }
+    60%  { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .bubble-body {
+    background: white;
+    border-radius: 28px;
+    padding: 1.1rem 1.4rem 1.25rem;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 8px 18px rgba(74, 111, 165, 0.18);
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  /* extra bumps to give the bubble that lumpy cartoon outline */
+  .bubble-body::before,
+  .bubble-body::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 -4px 10px rgba(74, 111, 165, 0.10);
+    z-index: -1;
+  }
+  .bubble-body::before { top: -16px; left: 22%;  width: 52px; height: 52px; }
+  .bubble-body::after  { top: -10px; right: 18%; width: 36px; height: 36px; }
+
+  .bubble-text {
+    display: block;
+    margin: 0;
+  }
+  .berry-row {
+    display: block;
+    margin: 0.35rem 0;
+    font-size: 1.3rem;
+    letter-spacing: 0.1rem;
+    line-height: 1.3;
+  }
+
+  /* small thought-puff circles trailing DOWN from the bubble toward the rabbit */
+  .tail {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 3px 6px rgba(74, 111, 165, 0.18);
+    left: 50%;
+  }
+  .tail-1 { width: 18px; height: 18px; bottom: -24px; transform: translateX(-50%); }
+  .tail-2 { width: 12px; height: 12px; bottom: -42px; transform: translateX(-50%); }
+  .tail-3 { width: 7px;  height: 7px;  bottom: -55px; transform: translateX(-50%); }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
@@ -179,9 +282,26 @@
     <div class="placeholder">📸 Emily's photo lands here</div>
   </div>
 
+  <div class="rabbit-section">
+    <div class="thought-bubble" id="thought-bubble" role="status" aria-hidden="true">
+      <div class="bubble-body">
+        <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
+        <span class="bubble-text">My bags of mischief are brewing,<br>I am going berry crazy!!!</span>
+        <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓🍓🍓</span>
+        <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
+      </div>
+      <span class="tail tail-1" aria-hidden="true"></span>
+      <span class="tail tail-2" aria-hidden="true"></span>
+      <span class="tail tail-3" aria-hidden="true"></span>
+    </div>
+    <button class="rabbit-button" id="rabbit-btn"
+            aria-expanded="false" aria-controls="thought-bubble"
+            aria-label="Tap the rabbit to see what it's thinking">🐰</button>
+  </div>
+
   <p class="message">
-    Wishing you the sunniest, loveliest, sillest birthday weekend.<br>
-    May your snacks be plentiful, bags of mischeifs brewed to the fullest,<br>
+    Wishing you the sunniest, loveliest, silliest birthday weekend.<br>
+    May your snacks be plentiful, bags of mischiefs brewed to the fullest,<br>
     peaceful sun shines on you, and your laughter the loudest sound in any room. 🐰 🐿️ 💖
   </p>
 
@@ -218,6 +338,18 @@
       el.style.animationDelay = (Math.random() * -30) + 's';
       layer.appendChild(el);
     }
+  })();
+
+  // Rabbit thought bubble toggle
+  (function () {
+    var btn = document.getElementById('rabbit-btn');
+    var bubble = document.getElementById('thought-bubble');
+    if (!btn || !bubble) return;
+    btn.addEventListener('click', function () {
+      var open = bubble.classList.toggle('show');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      bubble.setAttribute('aria-hidden', open ? 'false' : 'true');
+    });
   })();
 </script>
 </body>
