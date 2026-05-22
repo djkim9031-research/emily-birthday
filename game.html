@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🐰 Berry & Carrot Catch — Emily's Birthday Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #BDE7FF;
+    --bg-2: #C8F5D2;
+    --text: #2c3e50;
+    --accent: #4a6fa5;
+    --accent-soft: #6a8fb5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Fredoka', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .game-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 0.85rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .game-title {
+    font-size: clamp(0.95rem, 3.2vw, 1.25rem);
+    font-weight: 600;
+    color: var(--accent);
+    text-shadow: 1px 1px 0 white;
+  }
+  .score-display {
+    font-size: clamp(0.95rem, 3.2vw, 1.15rem);
+    background: white;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    box-shadow: 0 3px 8px rgba(74, 111, 165, 0.2);
+    white-space: nowrap;
+  }
+  .score-display .gap { display: inline-block; width: 0.6rem; }
+
+  .game-area {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .falling-item {
+    position: absolute;
+    font-size: clamp(1.7rem, 5vw, 2.2rem);
+    pointer-events: none;
+    will-change: transform;
+    user-select: none;
+  }
+
+  .player {
+    position: absolute;
+    font-size: clamp(2.6rem, 7vw, 3.5rem);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 3;
+    will-change: transform;
+    user-select: none;
+    filter: drop-shadow(0 4px 6px rgba(74, 111, 165, 0.25));
+  }
+
+  /* tiny catch puff reused on each successful catch */
+  .catch-puff {
+    position: fixed;
+    pointer-events: none;
+    z-index: 4;
+    font-size: 1.1rem;
+    user-select: none;
+    animation: puff-rise 0.75s ease-out forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes puff-rise {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--pdx, 0), var(--pdy, -50px)) scale(1.2); }
+  }
+
+  /* mobile/desktop hint */
+  .game-instructions {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.35rem 0.95rem;
+    border-radius: 999px;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+    text-align: center;
+    max-width: 92vw;
+  }
+  .game-instructions.hidden { opacity: 0; }
+
+  /* game-over thought-bubble overlay */
+  .game-over-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 1rem;
+  }
+  .game-over-overlay.show { display: flex; }
+
+  .game-over-bubble {
+    background: white;
+    border-radius: 28px;
+    padding: 1.8rem 2rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 14px 36px rgba(74, 111, 165, 0.3);
+    max-width: min(420px, 92vw);
+    position: relative;
+    animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  /* lumpy edges for thought-bubble feel */
+  .game-over-bubble::before,
+  .game-over-bubble::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 -4px 10px rgba(74, 111, 165, 0.10);
+    z-index: -1;
+  }
+  .game-over-bubble::before { top: -20px; left: 16%; width: 64px; height: 64px; }
+  .game-over-bubble::after  { top: -12px; right: 14%; width: 42px; height: 42px; }
+
+  @keyframes pop-in {
+    0%   { opacity: 0; transform: scale(0.4); }
+    60%  { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .game-over-bubble h2 {
+    font-size: clamp(1.4rem, 5vw, 1.85rem);
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+  .game-over-bubble .yo-gaeguri {
+    font-size: clamp(1.2rem, 4.2vw, 1.55rem);
+    color: var(--accent-soft);
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+  .game-over-bubble .final-score {
+    font-size: clamp(1.05rem, 3.6vw, 1.25rem);
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+  }
+  .game-over-bubble .final-score .item {
+    display: inline-block;
+    margin: 0 0.55rem;
+  }
+  .game-over-bubble .final-score .item strong {
+    color: var(--accent);
+    font-size: 1.15em;
+  }
+
+  .game-over-buttons {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .game-over-buttons a,
+  .game-over-buttons button {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(74, 111, 165, 0.22);
+    transition: transform 0.15s ease;
+    display: inline-block;
+  }
+  .game-over-buttons a:hover,
+  .game-over-buttons button:hover  { transform: scale(1.06); }
+  .game-over-buttons a:active,
+  .game-over-buttons button:active { transform: scale(0.96); }
+  .game-over-buttons a:focus-visible,
+  .game-over-buttons button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="game-header">
+  <div class="game-title">🐰 Berry &amp; Carrot Catch</div>
+  <div class="score-display" aria-live="polite">
+    🍓 <strong id="berry-count">0</strong><span class="gap"></span>🥕 <strong id="carrot-count">0</strong>
+  </div>
+</header>
+
+<div class="game-area" id="game-area"></div>
+
+<div class="game-instructions" id="game-instructions">
+  move 🐰 with your cursor (or finger) — catch 🍓 and 🥕, avoid 🐸
+</div>
+
+<div class="game-over-overlay" id="game-over-overlay" aria-hidden="true">
+  <div class="game-over-bubble" role="alertdialog" aria-labelledby="go-title" aria-describedby="go-score">
+    <h2 id="go-title">🐸 caught!</h2>
+    <p class="yo-gaeguri">Yo Gaeguri~</p>
+    <p class="final-score" id="go-score">
+      <span class="item">🍓 <strong id="final-berries">0</strong></span>
+      <span class="item">🥕 <strong id="final-carrots">0</strong></span>
+    </p>
+    <div class="game-over-buttons">
+      <button type="button" id="restart-btn">🔁 Play again</button>
+      <a href="index.html" id="home-link">🏠 Back home</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var gameArea       = document.getElementById('game-area');
+  var berryCountEl   = document.getElementById('berry-count');
+  var carrotCountEl  = document.getElementById('carrot-count');
+  var overlay        = document.getElementById('game-over-overlay');
+  var finalBerriesEl = document.getElementById('final-berries');
+  var finalCarrotsEl = document.getElementById('final-carrots');
+  var restartBtn     = document.getElementById('restart-btn');
+  var instructions   = document.getElementById('game-instructions');
+
+  var player = null;
+  var items = [];
+  var berries = 0, carrots = 0;
+  var running = false;
+  var playerX = 0, playerY = 0;
+  var targetX = 0, targetY = 0;
+  var lastSpawnTime = 0;
+  var nextSpawnDelay = 700;
+  var frogGraceMs = 5000;  // no frog for the first 5 seconds
+  var lastTime = 0;
+  var animFrame = null;
+  var isTouch = false;     // becomes true on first touch event
+
+  function setPlayerPosition(x, y) {
+    var W = window.innerWidth, H = window.innerHeight;
+    playerX = Math.max(28, Math.min(W - 28, x));
+    playerY = Math.max(28, Math.min(H - 28, y));
+    if (player) {
+      player.style.left = playerX + 'px';
+      player.style.top  = playerY + 'px';
+    }
+  }
+
+  function createPlayer() {
+    if (player) player.remove();
+    player = document.createElement('div');
+    player.className = 'player';
+    player.textContent = '🐰';
+    gameArea.appendChild(player);
+    setPlayerPosition(window.innerWidth / 2, window.innerHeight * 0.78);
+    targetX = playerX;
+    targetY = playerY;
+  }
+
+  function spawnItem() {
+    var W = window.innerWidth;
+    var el = document.createElement('div');
+    el.className = 'falling-item';
+
+    // Decide what falls
+    var r = Math.random();
+    var type;
+    if (frogGraceMs <= 0 && r < 0.08) {
+      type = 'frog';
+      el.textContent = '🐸';
+    } else if (r < 0.55) {
+      type = 'berry';
+      el.textContent = '🍓';
+    } else {
+      type = 'carrot';
+      el.textContent = '🥕';
+    }
+
+    var x = 30 + Math.random() * (W - 60);
+    var y = -60;
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    gameArea.appendChild(el);
+
+    // speed scales with viewport height so it feels consistent across devices
+    var H = window.innerHeight;
+    var speed = (H / 3) + Math.random() * (H / 4); // px/sec
+
+    items.push({ el: el, x: x, y: y, speed: speed, type: type });
+  }
+
+  function catchPuff(x, y, type) {
+    var emojis = type === 'berry' ? ['🍓','✨','💖']
+              : type === 'carrot' ? ['🥕','✨','💚']
+              : ['✨','✨','✨'];
+    for (var i = 0; i < 3; i++) {
+      var p = document.createElement('div');
+      p.className = 'catch-puff';
+      p.textContent = emojis[i];
+      p.style.left = x + 'px';
+      p.style.top  = y + 'px';
+      var dx = (Math.random() - 0.5) * 60;
+      var dy = -30 - Math.random() * 30;
+      p.style.setProperty('--pdx', dx + 'px');
+      p.style.setProperty('--pdy', dy + 'px');
+      document.body.appendChild(p);
+      (function (n) { setTimeout(function () { n.remove(); }, 800); })(p);
+    }
+  }
+
+  function checkCollision(item) {
+    // approximate item center (top-left of element + half size)
+    var size = 30;
+    var ix = item.x + size / 2;
+    var iy = item.y + size / 2;
+    var dx = ix - playerX;
+    var dy = iy - playerY;
+    var radius = 52; // catch radius — generous but fair
+    return (dx * dx + dy * dy) < (radius * radius);
+  }
+
+  function endGame() {
+    running = false;
+    cancelAnimationFrame(animFrame);
+    finalBerriesEl.textContent = berries;
+    finalCarrotsEl.textContent = carrots;
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+    // a small celebration burst from the player's last position
+    catchPuff(playerX, playerY, 'frog');
+  }
+
+  function gameLoop(time) {
+    if (!running) return;
+    if (!lastTime) lastTime = time;
+    var dt = Math.min(0.05, (time - lastTime) / 1000); // clamp to avoid big jumps on tab switch
+    lastTime = time;
+
+    // smooth player follow toward target (gives a tiny lag, feels nicer)
+    var lerp = isTouch ? 0.45 : 0.6;
+    setPlayerPosition(
+      playerX + (targetX - playerX) * lerp,
+      playerY + (targetY - playerY) * lerp
+    );
+
+    // tick down frog grace
+    if (frogGraceMs > 0) frogGraceMs -= dt * 1000;
+
+    // spawn items
+    if (time - lastSpawnTime > nextSpawnDelay) {
+      spawnItem();
+      lastSpawnTime = time;
+      nextSpawnDelay = 600 + Math.random() * 500;
+    }
+
+    // update items
+    var H = window.innerHeight;
+    items = items.filter(function (item) {
+      item.y += item.speed * dt;
+      item.el.style.top = item.y + 'px';
+
+      if (checkCollision(item)) {
+        if (item.type === 'frog') {
+          item.el.remove();
+          endGame();
+          return false;
+        }
+        if (item.type === 'berry') {
+          berries++;
+          berryCountEl.textContent = berries;
+        } else {
+          carrots++;
+          carrotCountEl.textContent = carrots;
+        }
+        catchPuff(item.x + 16, item.y + 16, item.type);
+        item.el.remove();
+        return false;
+      }
+      if (item.y > H + 60) {
+        item.el.remove();
+        return false;
+      }
+      return true;
+    });
+
+    animFrame = requestAnimationFrame(gameLoop);
+  }
+
+  function clearItems() {
+    items.forEach(function (i) { i.el.remove(); });
+    items = [];
+  }
+
+  function startGame() {
+    clearItems();
+    berries = 0; carrots = 0;
+    berryCountEl.textContent = '0';
+    carrotCountEl.textContent = '0';
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden', 'true');
+    lastSpawnTime = 0;
+    lastTime = 0;
+    nextSpawnDelay = 700;
+    frogGraceMs = 5000;
+    createPlayer();
+    instructions.classList.remove('hidden');
+    running = true;
+    animFrame = requestAnimationFrame(gameLoop);
+
+    // fade out instructions after a few seconds
+    setTimeout(function () { instructions.classList.add('hidden'); }, 4500);
+  }
+
+  // --- input ---
+  function onMouseMove(e) {
+    if (!running || isTouch) return;
+    targetX = e.clientX;
+    targetY = e.clientY;
+  }
+  function onTouchMove(e) {
+    if (!running) return;
+    isTouch = true;
+    if (e.touches && e.touches[0]) {
+      // offset upward so the rabbit isn't fully under the finger
+      targetX = e.touches[0].clientX;
+      targetY = e.touches[0].clientY - 50;
+    }
+    e.preventDefault();
+  }
+  function onTouchStart(e) {
+    isTouch = true;
+    if (e.touches && e.touches[0]) {
+      targetX = e.touches[0].clientX;
+      targetY = e.touches[0].clientY - 50;
+    }
+    e.preventDefault();
+  }
+
+  document.addEventListener('mousemove',  onMouseMove);
+  document.addEventListener('touchmove',  onTouchMove,  { passive: false });
+  document.addEventListener('touchstart', onTouchStart, { passive: false });
+
+  restartBtn.addEventListener('click', startGame);
+
+  // keep player in bounds on resize / orientation change
+  window.addEventListener('resize', function () {
+    setPlayerPosition(playerX, playerY);
+  });
+
+  // visibility: pause loop when tab is hidden, resume on visible
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      cancelAnimationFrame(animFrame);
+    } else if (running) {
+      lastTime = 0;
+      animFrame = requestAnimationFrame(gameLoop);
+    }
+  });
+
+  startGame();
+})();
+</script>
+</body>
+</html>

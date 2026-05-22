@@ -444,6 +444,25 @@
   .memory-reset:active { transform: scale(0.96); }
   .memory-reset:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
+  /* "Play game" link inside the rabbit thought bubble */
+  .play-game-link {
+    display: inline-block;
+    margin-top: 0.85rem;
+    padding: 0.45rem 1.1rem;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(74, 111, 165, 0.22);
+    transition: transform 0.15s ease;
+  }
+  .play-game-link:hover  { transform: scale(1.06); }
+  .play-game-link:active { transform: scale(0.96); }
+  .play-game-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
@@ -478,6 +497,7 @@
           <span class="bubble-text">My bags of mischief are brewing,<br>I am going berry crazy!!!</span>
           <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓🍓🍓</span>
           <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
+          <a href="game.html" class="play-game-link">🎮 Play game</a>
         </div>
         <span class="tail tail-1" aria-hidden="true"></span>
         <span class="tail tail-2" aria-hidden="true"></span>
