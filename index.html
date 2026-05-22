@@ -172,7 +172,9 @@
   <p class="subhead">Birthday Weekend Edition ✨</p>
 
   <div class="photo-frame">
-    <img src="assets/emily.jpg" alt="A photo of Emily"
+    <img src="assets/emily.jpg?v=3" alt="A photo of Emily"
+         width="900" height="854"
+         loading="eager" decoding="async" fetchpriority="high"
          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
     <div class="placeholder">📸 Emily's photo lands here</div>
   </div>
@@ -193,18 +195,15 @@
 <script>
   (function () {
     var emojis = [
-      // cute critters — weighted so they show up often
-      '🐸','🐸','🐸',
-      '🦝','🦝','🦝',
-      '🐰','🐰','🐰',
-      '🐿️','🐿️','🐿️',
-      // hearts (sparkling + red)
-      '💖','💖','💖',
-      '❤️','❤️','❤️',
-      // birthday cakes
-      '🎂','🎂','🎂',
-      // light accents for variety
-      '✨','🌸','🎈'
+      // majority: rabbits, squirrels, hearts
+      '🐰','🐰','🐰','🐰','🐰',
+      '🐿️','🐿️','🐿️','🐿️','🐿️',
+      '💖','💖','💖','💖',
+      '❤️','❤️','❤️','❤️',
+      // minority: appear sparingly
+      '🐸',
+      '🦝',
+      '🎂'
     ];
     var layer = document.getElementById('float-layer');
     if (!layer) return;
