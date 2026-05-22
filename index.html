@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Happy Birthday Emily! 🎂</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #BDE7FF;
+    --bg-2: #C8F5D2;
+    --text: #2c3e50;
+    --accent: #4a6fa5;
+    --accent-soft: #6a8fb5;
+    --frame-bg: #ffffff;
+    --frame-shadow: rgba(74, 111, 165, 0.22);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100vh;
+    font-family: 'Fredoka', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  /* floating background emoji layer */
+  .float-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .floating-emoji {
+    position: absolute;
+    bottom: -10vh;
+    animation: floatUp linear infinite;
+    will-change: transform, opacity;
+    user-select: none;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translateY(0)        rotate(0deg);  opacity: 0; }
+    10%  { opacity: 0.75; }
+    90%  { opacity: 0.75; }
+    100% { transform: translateY(-115vh)   rotate(360deg); opacity: 0; }
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 5rem;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 0 #ffffff;
+    animation: wobble 4s ease-in-out infinite;
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-2deg); }
+    50%      { transform: rotate(2deg); }
+  }
+
+  .subhead {
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    font-style: italic;
+    color: var(--accent-soft);
+    margin-bottom: 2.5rem;
+  }
+
+  .photo-frame {
+    display: inline-block;
+    background: var(--frame-bg);
+    padding: 0.75rem 0.75rem 1.25rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px var(--frame-shadow);
+    transform: rotate(-2deg);
+    animation: pulse 6s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: rotate(-2deg) scale(0.98); }
+    50%      { transform: rotate(-2deg) scale(1.02); }
+  }
+
+  .photo-frame img,
+  .photo-frame .placeholder {
+    display: block;
+    width: clamp(220px, 60vw, 320px);
+    height: clamp(220px, 60vw, 320px);
+    object-fit: cover;
+    border-radius: 0.75rem;
+  }
+
+  .photo-frame .placeholder {
+    background: linear-gradient(135deg, #FFE5EC 0%, #FFF4D6 100%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #C26A89;
+    font-size: 1rem;
+    padding: 1rem;
+  }
+
+  .message {
+    margin: 2.5rem auto 0;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    line-height: 1.6;
+    max-width: 520px;
+  }
+
+  .footer-emojis {
+    margin-top: 2rem;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    letter-spacing: 0.25rem;
+    line-height: 1.8;
+  }
+
+  .footer-emojis span {
+    display: inline-block;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  .footer-emojis span:nth-child(2n) { animation-delay: 0.2s; }
+  .footer-emojis span:nth-child(3n) { animation-delay: 0.4s; }
+  .footer-emojis span:nth-child(4n) { animation-delay: 0.6s; }
+  .footer-emojis span:nth-child(5n) { animation-delay: 0.8s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+
+  .credit {
+    margin-top: 3rem;
+    font-size: 0.85rem;
+    color: var(--accent-soft);
+    opacity: 0.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+    .photo-frame { transform: rotate(-2deg) scale(1); }
+    h1 { transform: rotate(0); }
+  }
+</style>
+</head>
+<body>
+<div class="float-layer" id="float-layer" aria-hidden="true"></div>
+
+<main>
+  <h1>🎂 Happy Birthday Emily! 🎂</h1>
+  <p class="subhead">Birthday Weekend Edition ✨</p>
+
+  <div class="photo-frame">
+    <img src="assets/emily.jpg" alt="A photo of Emily"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder">📸 Emily's photo lands here</div>
+  </div>
+
+  <p class="message">
+    Wishing you the silliest, sunniest birthday weekend.<br>
+    May your snacks be plentiful, your nap quality elite,<br>
+    and your laughter the loudest sound in any room. 🌻🐌🍰
+  </p>
+
+  <p class="footer-emojis" aria-hidden="true">
+    <span>🌸</span><span>🦋</span><span>🌈</span><span>⭐</span><span>🍰</span><span>🎈</span><span>🎉</span><span>💖</span><span>🌷</span><span>🐣</span><span>☁️</span><span>🦄</span><span>🧁</span><span>🍓</span>
+  </p>
+
+  <p class="credit">made with 💚💙 for Emily's birthday weekend</p>
+</main>
+
+<script>
+  (function () {
+    var emojis = [
+      '🌸','🦋','🌈','⭐','🍰','🎈','🎉','💖','🌷','🐣',
+      '☁️','🦄','🧁','🍓','🌻','🐌','🪷','🍭','🎀','🌼',
+      '🐝','🐞','🌙','✨','🍡'
+    ];
+    var layer = document.getElementById('float-layer');
+    if (!layer) return;
+    var count = 25;
+    for (var i = 0; i < count; i++) {
+      var el = document.createElement('div');
+      el.className = 'floating-emoji';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (Math.random() * 100) + 'vw';
+      el.style.fontSize = (1.4 + Math.random() * 1.6) + 'rem';
+      el.style.animationDuration = (16 + Math.random() * 22) + 's';
+      el.style.animationDelay = (Math.random() * -30) + 's';
+      layer.appendChild(el);
+    }
+  })();
+</script>
+</body>
+</html>
