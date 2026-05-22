@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>🪴 Grow Emily's Flower — Birthday Plant Tamagotchi</title>
+<title>🪴 Grow Emily's Garden — Birthday Plant Tamagotchi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
@@ -361,7 +361,7 @@
 <body>
 
 <header class="game-header">
-  <div class="game-title">🪴 Grow Emily's Flower</div>
+  <div class="game-title">🪴 Grow Emily's Garden</div>
 </header>
 
 <main>
@@ -418,9 +418,9 @@
 <!-- intro overlay -->
 <div class="overlay" id="intro-overlay" aria-hidden="true">
   <div class="overlay-card">
-    <h2>🪴 Grow Emily's Flower</h2>
+    <h2>🪴 Grow Emily's Garden</h2>
     <div class="intro-body">
-      <p class="intro-line"><strong>🎯 Goal:</strong> coax a seed into Emily's birthday flower 🌷 — 5 growth stages.</p>
+      <p class="intro-line"><strong>🎯 Goal:</strong> grow Emily's birthday garden 🌷 — coax a seed through 5 stages to full bloom.</p>
       <p class="intro-line"><strong>💧 Water</strong> &amp; <strong>🌾 Fertilize</strong> when bars get low. Both <em>decay over time</em>.</p>
       <p class="intro-line"><strong>⚠️ Balance:</strong> too much water = 🌊 drown · too much fertilizer = 🔥 burn · too little of either = 🥀 wilt.</p>
       <p class="intro-line"><strong>💖 Happy bar</strong> regenerates while both resources are in the healthy zone — that's when the plant grows.</p>
@@ -475,7 +475,7 @@
     { emoji: '🌱', label: 'sprout',             status: 'look — a tiny sprout!' },
     { emoji: '🌿', label: 'leafy',              status: 'leaves are unfurling' },
     { emoji: '🌾', label: 'tall stem',          status: 'a bud is forming…' },
-    { emoji: '🌷', label: '🌷 in full bloom!',  status: '🌷 Emily’s birthday flower is in full bloom!' }
+    { emoji: '🌷', label: '🌷 in full bloom!',  status: '🌷 Emily’s birthday garden is in full bloom!' }
   ];
 
   // State
@@ -619,7 +619,7 @@
     cancelAnimationFrame(rafId);
 
     const titles = {
-      win:   '🌷 Emily’s birthday flower is in full bloom!',
+      win:   '🌷 Emily’s birthday garden is in full bloom!',
       wilt:  '💧 your plant withered from thirst…',
       drown: '🌊 oh no — over-watered…',
       burn:  '🔥 fertilizer burn!'
