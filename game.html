@@ -251,7 +251,7 @@
     </p>
     <div class="game-over-buttons">
       <button type="button" id="restart-btn">🔁 Play again</button>
-      <a href="index.html?v=2" id="home-link">🏠 Back home</a>
+      <a href="index.html?v=3" id="home-link">🏠 Back home</a>
     </div>
   </div>
 </div>
@@ -363,30 +363,17 @@
     return (dx * dx + dy * dy) < (radius * radius);
   }
 
-  function bigCelebration(x, y, type) {
-    var pool = type === 'berry'  ? ['🍓','💖','✨','🎉','🌸','🌟']
-             : type === 'carrot' ? ['🥕','🧡','✨','🎉','🌻','🌟']
-             : ['🐸','🌊','💦','✨'];
-    var n = 22;
-    for (var i = 0; i < n; i++) {
-      var p = document.createElement('div');
-      p.className = 'catch-puff';
-      p.textContent = pool[Math.floor(Math.random() * pool.length)];
-      p.style.left = x + 'px';
-      p.style.top  = y + 'px';
-      p.style.fontSize = (1.1 + Math.random() * 1.2) + 'rem';
-      var angle = (Math.PI * 2 * i / n) + (Math.random() - 0.5) * 0.4;
-      var dist = 80 + Math.random() * 110;
-      var dx = Math.cos(angle) * dist;
-      var dy = Math.sin(angle) * dist - 40;
-      p.style.setProperty('--pdx', dx + 'px');
-      p.style.setProperty('--pdy', dy + 'px');
-      document.body.appendChild(p);
-      (function (n) { setTimeout(function () { n.remove(); }, 1100); })(p);
+  // Reuses the proven-working catchPuff a few times for a win celebration.
+  function celebrateWin(x, y, type) {
+    for (var i = 0; i < 6; i++) {
+      var ox = (Math.random() - 0.5) * 120;
+      var oy = (Math.random() - 0.5) * 60;
+      catchPuff(x + ox, y + oy, type);
     }
   }
 
   function endGame(reason) {
+    if (!running) return;                 // re-entrancy guard
     running = false;
     cancelAnimationFrame(animFrame);
     finalBerriesEl.textContent = berries;
@@ -397,19 +384,26 @@
     if (reason === 'berry-win') {
       titleEl.textContent    = '🍓 Berry impressive!';
       subtitleEl.textContent = "you're berry, berry good!";
-      bigCelebration(playerX, playerY, 'berry');
     } else if (reason === 'carrot-win') {
       titleEl.textContent    = '🥕 Carrot-tastic!';
       subtitleEl.textContent = 'Awesome, I am rooting for you! 🥕';
-      bigCelebration(playerX, playerY, 'carrot');
     } else {
       titleEl.textContent    = '🐸 caught!';
       subtitleEl.textContent = 'Yo Gaeguri~';
-      catchPuff(playerX, playerY, 'frog');
     }
 
+    // Show the overlay FIRST so even if any visual flair throws, the bubble still appears.
     overlay.classList.add('show');
+    overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
+
+    try {
+      if (reason === 'berry-win' || reason === 'carrot-win') {
+        celebrateWin(playerX, playerY, reason === 'berry-win' ? 'berry' : 'carrot');
+      } else {
+        catchPuff(playerX, playerY, 'frog');
+      }
+    } catch (_) { /* never let visual flair block the end screen */ }
   }
 
   function gameLoop(time) {
@@ -483,6 +477,7 @@
     berryCountEl.textContent = '0';
     carrotCountEl.textContent = '0';
     overlay.classList.remove('show');
+    overlay.style.display = '';          // clear inline override from endGame
     overlay.setAttribute('aria-hidden', 'true');
     lastSpawnTime = 0;
     lastTime = 0;
