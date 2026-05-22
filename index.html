@@ -463,6 +463,178 @@
   .play-game-link:active { transform: scale(0.96); }
   .play-game-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
+  /* floating chat widget (free public LLM) */
+  .chat-toggle {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    box-shadow: 0 6px 18px rgba(74, 111, 165, 0.32);
+    border: none;
+    font-size: 1.7rem;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+  }
+  .chat-toggle:hover  { transform: scale(1.08); }
+  .chat-toggle:active { transform: scale(0.95); }
+  .chat-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+  .chat-panel {
+    position: fixed;
+    bottom: 5.5rem;
+    right: 1.25rem;
+    width: 360px;
+    max-width: calc(100vw - 1.5rem);
+    height: 480px;
+    max-height: calc(100vh - 7rem);
+    background: white;
+    border-radius: 22px;
+    box-shadow: 0 14px 40px rgba(74, 111, 165, 0.32);
+    z-index: 99;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .chat-panel.show {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .chat-header {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .chat-close {
+    background: rgba(255, 255, 255, 0.55);
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .chat-close:hover { background: rgba(255, 255, 255, 0.85); }
+
+  .chat-transcript {
+    flex: 1;
+    padding: 0.85rem 0.75rem;
+    overflow-y: auto;
+    background: linear-gradient(180deg, rgba(255, 250, 248, 0.5), rgba(248, 252, 255, 0.6));
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .chat-msg {
+    padding: 0.55rem 0.85rem;
+    border-radius: 16px;
+    max-width: 85%;
+    font-size: 0.93rem;
+    line-height: 1.45;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .chat-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    border-bottom-right-radius: 4px;
+  }
+  .chat-msg.bot {
+    align-self: flex-start;
+    background: white;
+    border: 1px solid #f0e6ee;
+    border-bottom-left-radius: 4px;
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(74, 111, 165, 0.06);
+  }
+  .chat-msg.thinking {
+    align-self: flex-start;
+    color: var(--accent-soft);
+    font-style: italic;
+    background: transparent;
+    padding-left: 0.2rem;
+    font-size: 0.88rem;
+  }
+
+  .chat-input-row {
+    padding: 0.55rem;
+    border-top: 1px solid #f0e6ee;
+    display: flex;
+    gap: 0.4rem;
+    background: white;
+  }
+  .chat-input {
+    flex: 1;
+    border: 1px solid #e0d4dc;
+    border-radius: 999px;
+    padding: 0.5rem 0.95rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    background: rgba(255, 250, 248, 0.7);
+  }
+  .chat-input:focus { border-color: var(--accent); background: white; }
+
+  .chat-send {
+    border: none;
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+    background: linear-gradient(135deg, #BDE7FF, #C8F5D2);
+    color: var(--text);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    box-shadow: 0 3px 7px rgba(74, 111, 165, 0.18);
+    transition: transform 0.15s ease;
+  }
+  .chat-send:hover  { transform: scale(1.05); }
+  .chat-send:active { transform: scale(0.96); }
+  .chat-send:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  .chat-disclaimer {
+    font-size: 0.7rem;
+    color: var(--accent-soft);
+    text-align: center;
+    padding: 0.35rem 0.5rem;
+    background: rgba(255, 250, 248, 0.7);
+    border-top: 1px solid #f6ecf2;
+  }
+
+  @media (max-width: 480px) {
+    .chat-panel {
+      bottom: 5rem;
+      right: 0.6rem;
+      left: 0.6rem;
+      width: auto;
+      height: 70vh;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
@@ -667,7 +839,7 @@
     }
     document.addEventListener('click', function (e) {
       // skip real interactive elements — they have their own behavior
-      if (e.target.closest('button, a, input, textarea, select')) return;
+      if (e.target.closest('button, a, input, textarea, select, .chat-panel, .chat-toggle')) return;
       spawnBurst(e.clientX, e.clientY);
     }, { passive: true });
   })();
@@ -784,6 +956,152 @@
     reset.addEventListener('click', buildBoard);
     buildBoard();
   })();
+
+  // Floating chat widget — talks to a free public LLM (Pollinations.AI, no auth).
+  (function () {
+    var toggle    = document.getElementById('chat-toggle');
+    var panel     = document.getElementById('chat-panel');
+    var closeBtn  = document.getElementById('chat-close');
+    var transcript = document.getElementById('chat-transcript');
+    var input     = document.getElementById('chat-input');
+    var send      = document.getElementById('chat-send');
+    if (!toggle || !panel || !transcript || !input || !send) return;
+
+    var STORAGE_KEY = 'emily-chat-v1';
+    var SYSTEM_PROMPT = "You are a warm, friendly, and concise chat companion living on Emily's birthday website. You can chat about absolutely anything — from deep philosophical questions to silly jokes to recipe tips. Keep replies short and conversational unless asked for detail. Use occasional gentle emojis but don't overdo it.";
+
+    var history = [{ role: 'system', content: SYSTEM_PROMPT }];
+
+    // try to restore prior conversation from localStorage
+    try {
+      var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (saved && Array.isArray(saved) && saved.length > 0) {
+        history = saved;
+        // rebuild visible transcript from history (skip the system msg)
+        transcript.innerHTML = '';
+        for (var i = 0; i < history.length; i++) {
+          if (history[i].role === 'user' || history[i].role === 'assistant') {
+            renderMessage(history[i].role === 'user' ? 'user' : 'bot', history[i].content);
+          }
+        }
+        if (transcript.children.length === 0) renderWelcome();
+      } else {
+        renderWelcome();
+      }
+    } catch (_) {
+      renderWelcome();
+    }
+
+    function renderWelcome() {
+      renderMessage('bot', "hi! 👋 i'm here to chat about anything. what's on your mind?");
+    }
+
+    function persist() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(history)); } catch (_) {}
+    }
+
+    function renderMessage(who, text) {
+      var msg = document.createElement('div');
+      msg.className = 'chat-msg ' + (who === 'user' ? 'user' : 'bot');
+      msg.textContent = text;
+      transcript.appendChild(msg);
+      transcript.scrollTop = transcript.scrollHeight;
+      return msg;
+    }
+
+    function showThinking() {
+      var msg = document.createElement('div');
+      msg.className = 'chat-msg thinking';
+      msg.textContent = 'thinking…';
+      transcript.appendChild(msg);
+      transcript.scrollTop = transcript.scrollHeight;
+      return msg;
+    }
+
+    function openPanel() {
+      panel.classList.add('show');
+      panel.setAttribute('aria-hidden', 'false');
+      setTimeout(function () { input.focus(); }, 200);
+    }
+    function closePanel() {
+      panel.classList.remove('show');
+      panel.setAttribute('aria-hidden', 'true');
+    }
+
+    toggle.addEventListener('click', function () {
+      if (panel.classList.contains('show')) closePanel(); else openPanel();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closePanel);
+
+    // Esc closes the panel
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && panel.classList.contains('show')) closePanel();
+    });
+
+    function sendMessage() {
+      var text = input.value.trim();
+      if (!text || send.disabled) return;
+      input.value = '';
+      send.disabled = true;
+
+      renderMessage('user', text);
+      history.push({ role: 'user', content: text });
+
+      // Trim history if too long (keep system + last 20 turns)
+      if (history.length > 41) {
+        history = [history[0]].concat(history.slice(history.length - 40));
+      }
+
+      var thinking = showThinking();
+
+      fetch('https://text.pollinations.ai/openai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history, model: 'openai' })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          thinking.remove();
+          var reply = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
+            ? String(data.choices[0].message.content).trim()
+            : 'hmm, i got a bit tangled. try again? 🫠';
+          renderMessage('bot', reply);
+          history.push({ role: 'assistant', content: reply });
+          persist();
+          send.disabled = false;
+          input.focus();
+        })
+        .catch(function () {
+          thinking.remove();
+          renderMessage('bot', "oof — the chat brain hiccupped. give it another go in a moment 💫");
+          send.disabled = false;
+          input.focus();
+        });
+    }
+
+    send.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  })();
 </script>
+
+<!-- chat widget DOM -->
+<button class="chat-toggle" id="chat-toggle" type="button" aria-label="Open chat" aria-expanded="false">💬</button>
+<aside class="chat-panel" id="chat-panel" role="dialog" aria-label="Chat" aria-hidden="true">
+  <div class="chat-header">
+    <span>💬 chat about anything</span>
+    <button class="chat-close" id="chat-close" type="button" aria-label="Close chat">×</button>
+  </div>
+  <div class="chat-transcript" id="chat-transcript" aria-live="polite"></div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" type="text" placeholder="type a message…" autocomplete="off">
+    <button class="chat-send" id="chat-send" type="button">send</button>
+  </div>
+  <div class="chat-disclaimer">powered by free public AI · messages aren't private</div>
+</aside>
 </body>
 </html>
