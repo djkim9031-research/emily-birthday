@@ -153,9 +153,17 @@
     opacity: 0.7;
   }
 
-  /* rabbit + thought-bubble */
-  .rabbit-section {
+  /* row of critter buttons (rabbit, squirrel, ...) with their thought bubbles */
+  .critter-row {
     margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .rabbit-section {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -282,21 +290,39 @@
     <div class="placeholder">📸 Emily's photo lands here</div>
   </div>
 
-  <div class="rabbit-section">
-    <div class="thought-bubble" id="thought-bubble" role="status" aria-hidden="true">
-      <div class="bubble-body">
-        <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
-        <span class="bubble-text">My bags of mischief are brewing,<br>I am going berry crazy!!!</span>
-        <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓🍓🍓</span>
-        <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
+  <div class="critter-row">
+    <div class="rabbit-section">
+      <div class="thought-bubble" id="rabbit-bubble" role="status" aria-hidden="true">
+        <div class="bubble-body">
+          <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
+          <span class="bubble-text">My bags of mischief are brewing,<br>I am going berry crazy!!!</span>
+          <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓🍓🍓</span>
+          <span class="berry-row" aria-hidden="true">🍓🍓🍓🍓🍓</span>
+        </div>
+        <span class="tail tail-1" aria-hidden="true"></span>
+        <span class="tail tail-2" aria-hidden="true"></span>
+        <span class="tail tail-3" aria-hidden="true"></span>
       </div>
-      <span class="tail tail-1" aria-hidden="true"></span>
-      <span class="tail tail-2" aria-hidden="true"></span>
-      <span class="tail tail-3" aria-hidden="true"></span>
+      <button class="rabbit-button" id="rabbit-btn"
+              aria-expanded="false" aria-controls="rabbit-bubble"
+              aria-label="Tap the rabbit to see what it's thinking">🐰</button>
     </div>
-    <button class="rabbit-button" id="rabbit-btn"
-            aria-expanded="false" aria-controls="thought-bubble"
-            aria-label="Tap the rabbit to see what it's thinking">🐰</button>
+
+    <div class="rabbit-section">
+      <div class="thought-bubble" id="squirrel-bubble" role="status" aria-hidden="true">
+        <div class="bubble-body">
+          <span class="berry-row" aria-hidden="true">🎁🎁🎁🎁🎁</span>
+          <span class="berry-row" aria-hidden="true">🎁🎁🐸🎁🎁</span>
+          <span class="berry-row" aria-hidden="true">🎁🎁🎁🎁🎁</span>
+        </div>
+        <span class="tail tail-1" aria-hidden="true"></span>
+        <span class="tail tail-2" aria-hidden="true"></span>
+        <span class="tail tail-3" aria-hidden="true"></span>
+      </div>
+      <button class="rabbit-button" id="squirrel-btn"
+              aria-expanded="false" aria-controls="squirrel-bubble"
+              aria-label="Tap the squirrel to see what it's thinking">🐿️</button>
+    </div>
   </div>
 
   <p class="message">
@@ -340,15 +366,36 @@
     }
   })();
 
-  // Rabbit thought bubble toggle
+  // Critter thought-bubble toggle (one bubble open at a time)
   (function () {
-    var btn = document.getElementById('rabbit-btn');
-    var bubble = document.getElementById('thought-bubble');
-    if (!btn || !bubble) return;
-    btn.addEventListener('click', function () {
-      var open = bubble.classList.toggle('show');
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      bubble.setAttribute('aria-hidden', open ? 'false' : 'true');
+    var pairs = [
+      { btnId: 'rabbit-btn',   bubbleId: 'rabbit-bubble' },
+      { btnId: 'squirrel-btn', bubbleId: 'squirrel-bubble' }
+    ];
+    var items = pairs
+      .map(function (p) {
+        return { btn: document.getElementById(p.btnId), bubble: document.getElementById(p.bubbleId) };
+      })
+      .filter(function (i) { return i.btn && i.bubble; });
+
+    function closeAll() {
+      items.forEach(function (i) {
+        i.bubble.classList.remove('show');
+        i.btn.setAttribute('aria-expanded', 'false');
+        i.bubble.setAttribute('aria-hidden', 'true');
+      });
+    }
+
+    items.forEach(function (item) {
+      item.btn.addEventListener('click', function () {
+        var wasOpen = item.bubble.classList.contains('show');
+        closeAll();
+        if (!wasOpen) {
+          item.bubble.classList.add('show');
+          item.btn.setAttribute('aria-expanded', 'true');
+          item.bubble.setAttribute('aria-hidden', 'false');
+        }
+      });
     });
   })();
 </script>
