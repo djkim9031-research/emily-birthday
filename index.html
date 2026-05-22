@@ -193,13 +193,22 @@
 <script>
   (function () {
     var emojis = [
-      '🌸','🦋','🌈','⭐','🍰','🎈','🎉','💖','🌷','🐣',
-      '☁️','🦄','🧁','🍓','🌻','🐌','🪷','🍭','🎀','🌼',
-      '🐝','🐞','🌙','✨','🍡'
+      // cute critters — weighted so they show up often
+      '🐸','🐸','🐸',
+      '🦝','🦝','🦝',
+      '🐰','🐰','🐰',
+      '🐿️','🐿️','🐿️',
+      // hearts (sparkling + red)
+      '💖','💖','💖',
+      '❤️','❤️','❤️',
+      // birthday cakes
+      '🎂','🎂','🎂',
+      // light accents for variety
+      '✨','🌸','🎈'
     ];
     var layer = document.getElementById('float-layer');
     if (!layer) return;
-    var count = 25;
+    var count = 40;
     for (var i = 0; i < count; i++) {
       var el = document.createElement('div');
       el.className = 'floating-emoji';
